@@ -12,6 +12,10 @@
 
 # testing
 /coverage
+loadtest-results.json
+
+# backups
+/backups
 
 # next.js
 /.next/
@@ -39,3 +43,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+!*.example
