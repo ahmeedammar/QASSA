@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_GALLERY_IMAGES, mediaPathPattern, type ShopMediaKind } from "@/lib/shops/media";
 
 const shopIdSchema = z.string().uuid();
 const optionalText = (max: number) =>
@@ -31,6 +32,16 @@ const priceSchema = z
   .transform(Number)
   .pipe(z.number().max(100000));
 
+/** A media field the owner left untouched arrives as "" or not at all. */
+const optionalMediaPath = (kind: ShopMediaKind) =>
+  z
+    .union([z.literal(""), z.string().trim().regex(mediaPathPattern(kind))])
+    .optional()
+    .transform((value) => value || null);
+
+const belongsToShop = (path: string | null, shopId: string) =>
+  path === null || path.startsWith(`${shopId}/`);
+
 export const saveShopServiceSchema = z.object({
   shopId: shopIdSchema,
   serviceId: shopIdSchema.optional(),
@@ -47,12 +58,37 @@ export const setShopContentActiveSchema = z.object({
   active: z.enum(["true", "false"]).transform((value) => value === "true"),
 });
 
-export const saveShopBarberSchema = z.object({
-  shopId: shopIdSchema,
-  barberId: shopIdSchema.optional(),
-  displayName: z.string().trim().min(1).max(120),
-  bio: optionalText(1000),
-});
+export const saveShopBarberSchema = z
+  .object({
+    shopId: shopIdSchema,
+    barberId: shopIdSchema.optional(),
+    displayName: z.string().trim().min(1).max(120),
+    bio: optionalText(1000),
+    avatarPath: optionalMediaPath("avatar"),
+  })
+  .refine((value) => belongsToShop(value.avatarPath, value.shopId), {
+    path: ["avatarPath"],
+    message: "invalid_media_path",
+  });
+
+export const saveShopMediaSchema = z
+  .object({
+    shopId: shopIdSchema,
+    logoPath: optionalMediaPath("logo"),
+    coverPath: optionalMediaPath("cover"),
+    galleryPaths: z
+      .array(z.string().trim())
+      .max(MAX_GALLERY_IMAGES)
+      .transform((paths) => paths.filter(Boolean))
+      .pipe(z.array(z.string().regex(mediaPathPattern("gallery")))),
+  })
+  .refine(
+    (value) =>
+      belongsToShop(value.logoPath, value.shopId) &&
+      belongsToShop(value.coverPath, value.shopId) &&
+      value.galleryPaths.every((path) => belongsToShop(path, value.shopId)),
+    { message: "invalid_media_path" },
+  );
 
 export const setBarberServicesSchema = z.object({
   shopId: shopIdSchema,

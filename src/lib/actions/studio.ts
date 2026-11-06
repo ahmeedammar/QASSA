@@ -15,6 +15,7 @@ import {
   saveBusinessHoursSchema,
   saveShopHolidaySchema,
   saveShopBarberSchema,
+  saveShopMediaSchema,
   saveShopServiceSchema,
   setBarberServicesSchema,
   setShopContentActiveSchema,
@@ -131,6 +132,71 @@ export async function saveShopWebsite(
   return { success: "saved" };
 }
 
+export async function saveShopMedia(
+  _previousState: StudioActionState,
+  formData: FormData,
+): Promise<StudioActionState> {
+  const parsed = saveShopMediaSchema.safeParse({
+    shopId: formData.get("shopId"),
+    logoPath: formData.get("logoPath") ?? "",
+    coverPath: formData.get("coverPath") ?? "",
+    galleryPaths: formData.getAll("galleryPaths"),
+  });
+  if (!parsed.success) return { error: "invalid_input" };
+
+  const access = await prepareStudioMutation(parsed.data.shopId);
+  if (!access.ok) return access.state;
+  const { supabase } = access;
+  const { data: previous } = await supabase
+    .from("barbershops")
+    .select("logo_path, cover_path, gallery_paths")
+    .eq("id", parsed.data.shopId)
+    .maybeSingle();
+  const { error } = await supabase.rpc("update_shop_media", {
+    p_shop_id: parsed.data.shopId,
+    p_logo_path: parsed.data.logoPath,
+    p_cover_path: parsed.data.coverPath,
+    p_gallery_paths: parsed.data.galleryPaths,
+  });
+
+  if (error) {
+    if (error.code === "42501") return { error: "forbidden" };
+    if (error.code === "22023") return { error: "invalid_input" };
+    if (error.code === "P0002") return { error: "not_available" };
+    console.error("Failed to save shop media", error);
+    return { error: "failed" };
+  }
+
+  // Objects that nothing points at any more. Deleting them here rather than in
+  // the browser keeps a discarded edit from destroying a live image.
+  const kept = new Set<string>([
+    parsed.data.logoPath,
+    parsed.data.coverPath,
+    ...parsed.data.galleryPaths,
+  ].filter((path): path is string => Boolean(path)));
+  const retired = [
+    previous?.logo_path,
+    previous?.cover_path,
+    ...(previous?.gallery_paths ?? []),
+  ].filter((path): path is string => Boolean(path) && !kept.has(path));
+  if (retired.length) {
+    const { error: removeError } = await supabase
+      .storage.from("shop-media")
+      .remove(retired);
+    if (removeError) console.error("Failed to prune replaced shop media", removeError);
+  }
+
+  const locale = await getLocale();
+  revalidateStudio(parsed.data.shopId, locale);
+  const { data: shop } = await supabase
+    .from("barbershops")
+    .select("slug")
+    .eq("id", parsed.data.shopId)
+    .maybeSingle();
+  if (shop?.slug) revalidatePath(`/${locale}/shop/${shop.slug}`);
+  return { success: "saved" };
+}
+
 export async function setShopPublished(
   _previousState: StudioActionState,
   formData: FormData,
@@ -158,7 +224,13 @@ export async function setShopPublished(
     .object({
       published: z.boolean(),
       missing: z.array(
-        z.enum(["services", "barber_services", "shop_hours", "barber_schedules"]),
+        z.enum([
+          "services",
+          "barber_services",
+          "shop_hours",
+          "barber_schedules",
+          "shop_media",
+        ]),
       ),
     })
     .safeParse(data);
@@ -259,15 +331,24 @@ export async function saveShopBarber(
     barberId: formData.get("barberId") || undefined,
     displayName: formData.get("displayName"),
     bio: formData.get("bio") ?? "",
+    avatarPath: formData.get("avatarPath") ?? "",
   });
   if (!parsed.success) return { error: "invalid_input" };
 
   const access = await prepareStudioMutation(parsed.data.shopId);
   if (!access.ok) return access.state;
   const { supabase } = access;
+  const { data: previousBarber } = parsed.data.barberId
+    ? await supabase
+        .from("barbers")
+        .select("avatar_path")
+        .eq("id", parsed.data.barberId)
+        .maybeSingle()
+    : { data: null };
   const values = {
     display_name: parsed.data.displayName,
     bio: parsed.data.bio,
+    avatar_path: parsed.data.avatarPath,
   };
 
   const result = parsed.data.barberId
@@ -287,6 +368,10 @@ export async function saveShopBarber(
   if (result.error || !result.data) {
     if (result.error) console.error("Failed to save Studio barber", result.error);
     return { error: "failed" };
+  }
+
+  if (previousBarber?.avatar_path && previousBarber.avatar_path !== parsed.data.avatarPath) {
+    await supabase.storage.from("shop-media").remove([previousBarber.avatar_path]);
   }
 
   revalidateStudio(parsed.data.shopId, await getLocale());

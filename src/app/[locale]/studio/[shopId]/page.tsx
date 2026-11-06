@@ -19,6 +19,10 @@ import {
   type StudioBusinessHour,
 } from "@/components/studio/schedule-editor";
 import {
+  ShopMediaEditor,
+  type ShopMedia,
+} from "@/components/studio/shop-media-editor";
+import {
   WebsiteSettingsEditor,
   type WebsiteSettings,
 } from "@/components/studio/website-settings-editor";
@@ -47,7 +51,7 @@ export default async function StudioShopPage({
     await Promise.all([
       supabase
         .from("barbershops")
-        .select("id, name, slug, city, address, phone, description, template_id, is_published, is_suspended")
+        .select("id, name, slug, city, address, phone, description, template_id, logo_path, cover_path, gallery_paths, is_published, is_suspended")
         .eq("id", shopId)
         .maybeSingle(),
       supabase
@@ -66,6 +70,11 @@ export default async function StudioShopPage({
   }
   if (!shopRow) notFound();
   const shop = shopRow as WebsiteSettings;
+  const media: ShopMedia = {
+    logo_path: shopRow.logo_path ?? null,
+    cover_path: shopRow.cover_path ?? null,
+    gallery_paths: shopRow.gallery_paths ?? [],
+  };
 
   const [
     { data: serviceRows, error: servicesError },
@@ -85,7 +94,7 @@ export default async function StudioShopPage({
       .order("name"),
     supabase
       .from("barbers")
-      .select("id, display_name, bio, is_active")
+      .select("id, display_name, bio, avatar_path, is_active")
       .eq("shop_id", shopId)
       .order("display_order")
       .order("display_name"),
@@ -216,6 +225,7 @@ export default async function StudioShopPage({
         daysOff={daysOff}
         holidays={holidays}
       />
+      <ShopMediaEditor shopId={shop.id} shopName={shop.name} media={media} />
       <WebsiteSettingsEditor shop={shop} />
     </main>
   );

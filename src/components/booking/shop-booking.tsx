@@ -191,7 +191,7 @@ export function ShopBooking({
             <button
               type="submit"
               disabled={loadingSlots || !serviceId || !barberId || !date}
-              className={buttonClasses("primary", "md", "sm:col-span-3 sm:w-fit")}
+              className={buttonClasses("primary", "md", "qassa-cta sm:col-span-3 sm:w-fit")}
             >
               {loadingSlots ? t("searching") : t("showTimes")}
             </button>
@@ -209,6 +209,7 @@ export function ShopBooking({
               {new Intl.NumberFormat(locale, {
                 style: "currency",
                 currency: "TND",
+                minimumFractionDigits: 0,
                 maximumFractionDigits: 3,
               }).format(service.price_tnd)}
             </p>
@@ -236,7 +237,7 @@ export function ShopBooking({
                     {currentSlots.map((slot) => (
                       <label
                         key={slot}
-                        className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${selectedSlot === slot ? "border-current font-semibold" : "border-border"}`}
+                        className={`qassa-slot inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${selectedSlot === slot ? "border-current bg-white/10 font-semibold shadow-sm" : "border-border hover:border-current"}`}
                       >
                         <input
                           type="radio"
@@ -271,7 +272,7 @@ export function ShopBooking({
               <button
                 type="submit"
                 disabled={needsLogin || submittingBooking || !idempotencyKey}
-                className={buttonClasses("primary", "lg", "sm:w-fit")}
+                className={buttonClasses("primary", "lg", "qassa-cta sm:w-fit")}
               >
                 {submittingBooking ? t("booking") : t("confirmBooking")}
               </button>

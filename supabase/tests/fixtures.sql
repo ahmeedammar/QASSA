@@ -85,6 +85,18 @@ select (:'day_d'::date + 1) as day_holiday \gset
 insert into public.shop_holidays (shop_id, holiday_date)
 values (:'shop_a', :'day_holiday');
 
+-- Storefront media, because the publication guard expects a real gallery.
+-- These paths also exercise the media trigger against each shop's own folder.
+update public.barbershops b
+set logo_path = b.id::text || '/logo/00000000-0000-4000-a000-000000000002.webp',
+    cover_path = b.id::text || '/cover/00000000-0000-4000-a000-000000000001.webp',
+    gallery_paths = array[
+      b.id::text || '/gallery/00000000-0000-4000-a000-000000000011.webp',
+      b.id::text || '/gallery/00000000-0000-4000-a000-000000000012.webp',
+      b.id::text || '/gallery/00000000-0000-4000-a000-000000000013.jpg'
+    ]
+where b.id in (:'shop_a', :'shop_b');
+
 -- The publication guard checks the caller's manager access.
 select set_config('request.jwt.claim.sub', :'owner_a', false);
 update public.barbershops set is_published = true where id = :'shop_a';

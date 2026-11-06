@@ -13,6 +13,9 @@ const publicShopSchema = z.object({
   address: z.string().nullable(),
   phone: z.string().nullable(),
   description: z.string().nullable(),
+  logo_path: z.string().nullable(),
+  cover_path: z.string().nullable(),
+  gallery_paths: z.array(z.string()),
   template_id: z.enum([
     "royal_gold",
     "urban_cut",
@@ -34,6 +37,7 @@ const publicBarberSchema = z.object({
   id: z.string().uuid(),
   display_name: z.string(),
   bio: z.string().nullable(),
+  avatar_path: z.string().nullable(),
 });
 
 const publicHoursSchema = z.object({
@@ -61,6 +65,9 @@ function escapeLikePattern(value: string): string {
 
 export const MARKETPLACE_PAGE_SIZE = 12;
 
+const SHOP_COLUMNS =
+  "id, name, slug, city, address, phone, description, logo_path, cover_path, gallery_paths, template_id";
+
 export async function listPublicShops({
   search,
   city,
@@ -74,10 +81,7 @@ export async function listPublicShops({
   const start = (page - 1) * MARKETPLACE_PAGE_SIZE;
   let request = supabase
     .from("public_barbershops")
-    .select(
-      "id, name, slug, city, address, phone, description, template_id",
-      { count: "exact" },
-    )
+    .select(SHOP_COLUMNS, { count: "exact" })
     .order("name", { ascending: true })
     .range(start, start + MARKETPLACE_PAGE_SIZE - 1);
 
@@ -114,7 +118,7 @@ export const getPublicShopBySlug = cache(
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("public_barbershops")
-      .select("id, name, slug, city, address, phone, description, template_id")
+      .select(SHOP_COLUMNS)
       .eq("slug", slug)
       .maybeSingle();
 
@@ -141,7 +145,7 @@ export const getPublicShopBySlug = cache(
           .order("name", { ascending: true }),
         supabase
           .from("barbers")
-          .select("id, display_name, bio")
+          .select("id, display_name, bio, avatar_path")
           .eq("shop_id", parsedShop.data.id)
           .eq("is_active", true)
           .order("display_order", { ascending: true })

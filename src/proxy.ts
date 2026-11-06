@@ -22,6 +22,8 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip static files, images, API routes handled elsewhere
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  // Skip static files, images, API routes, and the locale-free auth callback:
+  // next-intl would rewrite /auth/callback to /fr/auth/callback and the PKCE
+  // code exchange would never run.
+  matcher: ["/((?!api|_next|_vercel|auth|.*\\..*).*)"],
 };

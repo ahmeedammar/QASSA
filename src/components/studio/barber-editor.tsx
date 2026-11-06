@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState, useActionState } from "react";
 import { useTranslations } from "next-intl";
 import { inputClasses } from "@/components/ui/input";
 import { buttonClasses } from "@/components/ui/button";
+import { MediaSlot } from "@/components/studio/media-field";
 import {
   saveBarberServices,
   saveShopBarber,
@@ -17,6 +18,7 @@ export type StudioBarber = {
   id: string;
   display_name: string;
   bio: string | null;
+  avatar_path?: string | null;
   is_active: boolean;
 };
 
@@ -28,6 +30,7 @@ function BarberProfileForm({
   barber?: StudioBarber;
 }) {
   const t = useTranslations("studio");
+  const [avatarPath, setAvatarPath] = useState<string | null>(barber?.avatar_path ?? null);
   const [state, formAction, pending] = useActionState<StudioActionState, FormData>(
     saveShopBarber,
     {},
@@ -36,7 +39,17 @@ function BarberProfileForm({
   return (
     <form action={formAction} className="grid gap-4">
       <input type="hidden" name="shopId" value={shopId} />
+      <input type="hidden" name="avatarPath" value={avatarPath ?? ""} />
       {barber && <input type="hidden" name="barberId" value={barber.id} />}
+      <MediaSlot
+        shopId={shopId}
+        kind="avatar"
+        path={avatarPath}
+        onChange={setAvatarPath}
+        label={t("mediaBarberPhoto")}
+        aspectClass="aspect-3/4"
+        sizes="(max-width: 640px) 40vw, 15vw"
+      />
       <label className="grid gap-2 text-sm font-medium">
         {t("barberName")}
         <input
