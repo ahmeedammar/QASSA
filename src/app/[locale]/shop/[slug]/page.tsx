@@ -7,7 +7,7 @@ import { BarberAvatar } from "@/components/shop/barber-avatar";
 import { Reveal } from "@/components/shop/reveal";
 import { StorefrontGallery } from "@/components/shop/storefront-gallery";
 import { StorefrontHero } from "@/components/shop/storefront-hero";
-import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth/session";
 import { getPublicShopBySlug } from "@/lib/shops/marketplace";
 import { publicMediaUrl } from "@/lib/shops/media";
 import { SHOP_TEMPLATES } from "@/lib/shops/templates";
@@ -32,10 +32,9 @@ export async function generateMetadata({
 }
 
 export default async function ShopWebsitePage({ params }: ShopPageProps) {
-  const [{ locale, slug }, t, supabase] = await Promise.all([
+  const [{ locale, slug }, t] = await Promise.all([
     params,
     getTranslations("discover"),
-    createClient(),
   ]);
   const result = await getPublicShopBySlug(slug);
   if (!result.ok) {
@@ -49,11 +48,9 @@ export default async function ShopWebsitePage({ params }: ShopPageProps) {
   }
   if (!result.shop) notFound();
   const shop = result.shop;
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-  if (userError) console.error("Failed to check customer session on shop page", userError);
+  // Most storefront visitors are anonymous, so a missing session is the
+  // normal path, not a fault: getUser() resolves to null instead of raising.
+  const user = await getUser();
 
   const template = SHOP_TEMPLATES[shop.template_id];
   const serviceNames = new Map(
