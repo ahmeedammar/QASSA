@@ -29,16 +29,14 @@ The initial platform owner is bootstrapped once via
 [`supabase/seed_platform_owner.sql`](supabase/seed_platform_owner.sql) — there is no
 self-promotion path in the application.
 
-Migrations `0001`–`0012` have been applied to the configured QASSA project from the
+Migrations `0001`–`0018` have been applied to the configured QASSA project from the
 Supabase Dashboard SQL Editor. Dashboard SQL Editor executions are not recorded in
 the Supabase CLI migration history; reconcile that history before using `supabase db
-push` so already-applied migrations are not run again. The database currently has no
-shop records, so the public directory correctly starts empty.
-
-Migrations `0013` and `0014` are pending on the configured hosted project; do
-not apply them there. `0013` enforces the customer cancellation cutoff at
-appointment start. `0014` lets platform operations suspend shops and blocks
-shop members from reversing that flag.
+push` so already-applied migrations are not run again. `0018` replaces the date-based
+holiday calendar with the mandatory weekly rest day (`barbershops.closed_weekday`) and
+drops `shop_holidays`, so it has to be applied *before* deploying the code that reads
+the new column — otherwise Discover and the shop pages fall back to their load-error
+panel.
 
 Database-backed checks run only against a disposable local PostgreSQL database
 on loopback (`npm run test:db`, default `127.0.0.1:54329`). That runner never
