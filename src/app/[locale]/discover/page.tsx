@@ -87,7 +87,7 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
         ) : result?.ok && result.shops.length ? (
           <>
             <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
-              <h2 className="font-display text-2xl font-bold">
+              <h2 className="qassa-gradient-text font-display text-2xl font-bold">
                 {city.value || search.value
                   ? t("resultsFor", { term: city.value || search.value })
                   : t("allShops")}
@@ -155,13 +155,17 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
                 <h2 className="text-center font-display text-2xl font-bold">
                   {t("stepsTitle")}
                 </h2>
-                <ol className="mt-8 grid gap-5 sm:grid-cols-3">
+                <ol className="qassa-stagger mt-8 grid gap-5 sm:grid-cols-3">
                   {steps.map((step, index) => (
                     <li
                       key={step.title}
                       className="qassa-card rounded-3xl border border-border bg-card p-6"
                     >
-                      <span className="flex size-10 items-center justify-center rounded-full bg-primary/12 font-display text-lg font-bold text-primary">
+                      <span
+                        className={`flex size-10 items-center justify-center rounded-full bg-primary/12 font-display text-lg font-bold text-primary ${
+                          index === 1 ? "qassa-float-delayed" : "qassa-float"
+                        }`}
+                      >
                         {index + 1}
                       </span>
                       <h3 className="mt-4 font-display text-lg font-semibold">

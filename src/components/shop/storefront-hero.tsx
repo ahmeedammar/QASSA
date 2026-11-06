@@ -174,20 +174,33 @@ export function StorefrontHero({
         </div>
 
         {slides.length > 1 && (
-          <div className="flex items-center gap-2" role="tablist" aria-label={t("heroSlides")}>
-            {slides.map((url, index) => (
-              <button
-                key={url}
-                type="button"
-                role="tab"
-                aria-selected={index === active}
-                aria-label={t("heroSlideLabel", { index: index + 1, total: slides.length })}
-                onClick={() => setActive(index)}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  index === active ? "w-8 bg-white" : "w-3 bg-white/45 hover:bg-white/70"
-                }`}
+          <div>
+            <div className="flex items-center gap-2" role="tablist" aria-label={t("heroSlides")}>
+              {slides.map((url, index) => (
+                <button
+                  key={url}
+                  type="button"
+                  role="tab"
+                  aria-selected={index === active}
+                  aria-label={t("heroSlideLabel", { index: index + 1, total: slides.length })}
+                  onClick={() => setActive(index)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    index === active ? "w-8 bg-white" : "w-3 bg-white/45 hover:bg-white/70"
+                  }`}
+                />
+              ))}
+            </div>
+            {/* Remounting the fill per slide restarts the CSS timer, which is
+                kept in step with SLIDE_MS by the 5.2s in globals.css. */}
+            <div
+              aria-hidden="true"
+              className="mt-3 h-0.5 w-28 overflow-hidden rounded-full bg-white/25"
+            >
+              <div
+                key={active}
+                className="qassa-slide-progress h-full w-full rounded-full bg-white/85"
               />
-            ))}
+            </div>
           </div>
         )}
       </div>

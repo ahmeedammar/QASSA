@@ -144,7 +144,9 @@ export function MediaSlot({
           </button>
         )}
         {busy && (
-          <span className="absolute inset-x-0 bottom-0 h-1 animate-pulse bg-primary" aria-hidden="true" />
+          <span className="qassa-upload-bar absolute inset-x-0 bottom-0 h-1" aria-hidden="true">
+            <span />
+          </span>
         )}
       </div>
 
@@ -209,7 +211,7 @@ export function MediaGallery({
         </span>
       </div>
 
-      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <ul className="qassa-stagger grid grid-cols-2 gap-3 sm:grid-cols-3">
         {paths.map((path, index) => (
           <li
             key={path}
@@ -263,6 +265,10 @@ export function MediaGallery({
             )}
           </li>
         ))}
+
+        {busy && (
+          <li aria-hidden="true" className="qassa-skeleton aspect-4/3 rounded-xl" />
+        )}
 
         {paths.length < MAX_GALLERY_IMAGES && (
           <li>

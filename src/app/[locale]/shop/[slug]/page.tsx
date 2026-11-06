@@ -178,7 +178,7 @@ export default async function ShopWebsitePage({ params }: ShopPageProps) {
                     as="li"
                     key={service.id}
                     delay={index * 60}
-                    className={`qassa-card rounded-xl border p-5 ${template.panel}`}
+                    className={`qassa-card group rounded-xl border p-5 ${template.panel}`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -194,7 +194,9 @@ export default async function ShopWebsitePage({ params }: ShopPageProps) {
                           })}
                         </p>
                       </div>
-                      <span className={`font-semibold ${template.accent}`}>
+                      <span
+                        className={`font-semibold transition-transform duration-300 group-hover:scale-105 ${template.accent}`}
+                      >
                         {priceFormat.format(service.price_tnd)}
                       </span>
                     </div>
@@ -259,22 +261,27 @@ export default async function ShopWebsitePage({ params }: ShopPageProps) {
                   const dayHours = shop.businessHours.filter(
                     (hours) => hours.weekday === weekday,
                   );
+                  const isRestDay = dayHours.length === 0;
                   return (
                     <li
                       key={weekday}
                       className={`flex items-center justify-between gap-4 rounded-xl px-3 py-2 ${
                         isToday ? `font-semibold ${template.accent}` : ""
-                      }`}
+                      } ${isRestDay ? "qassa-rest-row" : ""}`}
                     >
                       <span className="flex items-center gap-2">
                         {weekdayFormat.format(new Date(Date.UTC(2024, 0, 7 + weekday)))}
                         {isToday && (
-                          <span className="text-xs font-semibold uppercase tracking-wide">
+                          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
+                            <span
+                              aria-hidden="true"
+                              className="qassa-ring inline-block size-1.5 rounded-full bg-success"
+                            />
                             {t("todayBadge")}
                           </span>
                         )}
                       </span>
-                      <span dir="ltr" className={dayHours.length ? "" : "opacity-70"}>
+                      <span dir="ltr" className={isRestDay ? "opacity-70" : ""}>
                         {dayHours.length
                           ? dayHours
                               .map(

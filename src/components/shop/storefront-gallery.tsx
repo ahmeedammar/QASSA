@@ -88,7 +88,7 @@ export function StorefrontGallery({ urls, shopName, template }: Props) {
               alt=""
               fill
               sizes="(max-width: 1280px) 55vw, 480px"
-              className="object-cover"
+              className="qassa-zoom object-cover"
             />
             <span
               className={`qassa-accordion-caption absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 p-4 text-start text-sm font-semibold ${template.chip}`}
@@ -138,7 +138,11 @@ export function StorefrontGallery({ urls, shopName, template }: Props) {
             className="absolute inset-0 size-full cursor-zoom-out"
           />
           <div className="relative flex h-full flex-col items-center justify-center gap-4">
-            <div className="qassa-slide-in relative aspect-4/3 w-full max-w-5xl shrink-0">
+            {/* Keyed by photo so every arrow press replays the entrance. */}
+            <div
+              key={urls[lightbox]}
+              className="qassa-slide-in relative aspect-4/3 w-full max-w-5xl shrink-0"
+            >
               <Image
                 src={urls[lightbox]}
                 alt={caption(lightbox)}

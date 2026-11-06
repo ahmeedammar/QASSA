@@ -202,8 +202,227 @@ body {
   transform: scaleX(-1);
 }
 
-.qassa-card:hover .qassa-zoom {
+.qassa-card:hover .qassa-zoom,
+.qassa-accordion-panel:hover .qassa-zoom {
   transform: scale(1.06);
+}
+
+/* ── Round two: depth over decoration ──
+   Same rules as above — CSS only, CSP-safe, and every entry is answered by
+   the reduced-motion block at the bottom of this file. */
+
+/* Holds the shape of content that has not landed yet (slots, uploads). */
+@keyframes qassa-shimmer {
+  from {
+    background-position: 140% 0;
+  }
+  to {
+    background-position: -140% 0;
+  }
+}
+
+.qassa-skeleton {
+  background-color: color-mix(in oklab, var(--border) 60%, transparent);
+  background-image: linear-gradient(
+    90deg,
+    transparent 20%,
+    rgb(255 255 255 / 0.5) 50%,
+    transparent 80%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  animation: qassa-shimmer 1.4s ease-in-out infinite;
+}
+
+/* A light wipe across cover art, only when the reader is already looking. */
+.qassa-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.qassa-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 35%,
+    rgb(255 255 255 / 0.2) 50%,
+    transparent 65%
+  );
+  transform: translate3d(-110%, 0, 0);
+  transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.qassa-card:hover .qassa-sheen::after,
+.qassa-sheen:hover::after {
+  transform: translate3d(110%, 0, 0);
+}
+
+/* Autoplay timer for the storefront slideshow, restarted per slide. */
+@keyframes qassa-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.qassa-slide-progress {
+  transform-origin: left center;
+  animation: qassa-progress 5.2s linear both;
+}
+
+[dir="rtl"] .qassa-slide-progress {
+  transform-origin: right center;
+}
+
+/* Status beacons: "we are open today", "today is your day". */
+@keyframes qassa-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgb(46 125 79 / 0.5);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 0.65rem rgb(46 125 79 / 0);
+  }
+}
+
+.qassa-ring {
+  animation: qassa-ring 2.6s ease-out infinite;
+}
+
+/* The weekly rest day reads as closed at a glance, even in a scanned table. */
+@keyframes qassa-stripes {
+  to {
+    background-position: 1.9rem 0;
+  }
+}
+
+.qassa-rest-row {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 0.5rem,
+    rgb(184 155 112 / 0.18) 0.5rem 1rem
+  );
+  animation: qassa-stripes 7s linear infinite;
+}
+
+/* Hand-drawn tick that completes the booking confirmation. */
+@keyframes qassa-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.qassa-check path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: qassa-draw 0.5s ease-out 0.08s forwards;
+}
+
+/* Brand gradient that slowly breathes across a heading. */
+@keyframes qassa-hue-pan {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 200% 50%;
+  }
+}
+
+.qassa-gradient-text {
+  background-image: linear-gradient(
+    100deg,
+    var(--primary),
+    var(--accent) 45%,
+    var(--primary)
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: qassa-hue-pan 9s ease-in-out infinite alternate;
+}
+
+/* Lists that arrive in sequence without shipping a stagger library. */
+.qassa-stagger > * {
+  animation: qassa-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.qassa-stagger > *:nth-child(2) { animation-delay: 45ms; }
+.qassa-stagger > *:nth-child(3) { animation-delay: 90ms; }
+.qassa-stagger > *:nth-child(4) { animation-delay: 135ms; }
+.qassa-stagger > *:nth-child(5) { animation-delay: 180ms; }
+.qassa-stagger > *:nth-child(6) { animation-delay: 225ms; }
+.qassa-stagger > *:nth-child(7) { animation-delay: 270ms; }
+.qassa-stagger > *:nth-child(8) { animation-delay: 315ms; }
+.qassa-stagger > *:nth-child(n + 9) { animation-delay: 360ms; }
+
+@keyframes qassa-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -6px, 0);
+  }
+}
+
+.qassa-float {
+  animation: qassa-float 6s ease-in-out infinite;
+}
+
+.qassa-float-delayed {
+  animation: qassa-float 6s ease-in-out 1.2s infinite;
+}
+
+/* Sheen inside the Studio setup progress bar. */
+.qassa-fill-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.qassa-fill-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    90deg,
+    transparent 25%,
+    rgb(255 255 255 / 0.55) 50%,
+    transparent 75%
+  );
+  background-size: 220% 100%;
+  animation: qassa-shimmer 2.6s linear infinite;
+}
+
+/* An upload has no honest percentage, so the bar travels instead of filling. */
+@keyframes qassa-travel {
+  from {
+    transform: translate3d(-100%, 0, 0);
+  }
+  to {
+    transform: translate3d(320%, 0, 0);
+  }
+}
+
+.qassa-upload-bar {
+  overflow: hidden;
+}
+
+.qassa-upload-bar > span {
+  display: block;
+  width: 32%;
+  height: 100%;
+  border-radius: inherit;
+  background-color: var(--primary);
+  animation: qassa-travel 1.15s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 
 /* Discover hero clip: two animations on one element, so they are declared
@@ -332,8 +551,24 @@ body {
   .qassa-slide-in,
   .qassa-ping,
   .qassa-hero-video,
-  .qassa-aurora {
+  .qassa-aurora,
+  .qassa-skeleton,
+  .qassa-slide-progress,
+  .qassa-ring,
+  .qassa-rest-row,
+  .qassa-gradient-text,
+  .qassa-stagger > *,
+  .qassa-float,
+  .qassa-float-delayed,
+  .qassa-upload-bar > span,
+  .qassa-fill-sheen::after {
     animation: none;
+  }
+
+  /* An indeterminate bar that cannot travel still has to read as "working". */
+  .qassa-upload-bar > span {
+    width: 100%;
+    opacity: 0.65;
   }
 
   .qassa-ping {
@@ -344,7 +579,18 @@ body {
     opacity: 1;
   }
 
+  /* A drawn tick has to land fully drawn when it cannot animate. */
+  .qassa-check path {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+  }
+
+  .qassa-slide-progress {
+    transform: none;
+  }
+
   .qassa-cta,
+  .qassa-sheen::after,
   .qassa-cta::after,
   .qassa-card,
   .qassa-zoom,
@@ -360,7 +606,13 @@ body {
     transform: none;
   }
 
-  .qassa-card:hover .qassa-zoom {
+  .qassa-card:hover .qassa-zoom,
+  .qassa-accordion-panel:hover .qassa-zoom {
     transform: none;
+  }
+
+  .qassa-card:hover .qassa-sheen::after,
+  .qassa-sheen:hover::after {
+    transform: translate3d(-110%, 0, 0);
   }
 }

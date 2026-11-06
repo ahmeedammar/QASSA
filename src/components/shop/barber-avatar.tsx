@@ -34,7 +34,7 @@ export function BarberAvatar({
   }
 
   return (
-    <span className="relative block aspect-3/4 w-full overflow-hidden rounded-2xl">
+    <span className="qassa-sheen relative block aspect-3/4 w-full overflow-hidden rounded-2xl">
       <Image
         src={url}
         alt={alt}

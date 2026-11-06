@@ -19,6 +19,16 @@ type Props = {
   accentClass: string;
 };
 
+/** Stand-in chips shaped like the slot grid they are about to become. */
+const SKELETON_SIZES = [
+  "h-9 w-[5.5rem]",
+  "h-9 w-20",
+  "h-9 w-[6.25rem]",
+  "h-9 w-[5.25rem]",
+  "h-9 w-[6.5rem]",
+  "h-9 w-20",
+];
+
 function Feedback({ state }: { state: BookingActionState }) {
   const t = useTranslations("booking");
   if (state.error === "login_required") {
@@ -223,6 +233,17 @@ export function ShopBooking({
               <Feedback state={{ error: slotsState.error }} />
             )}
 
+          {loadingSlots && (
+            <div aria-hidden="true" className="flex flex-wrap gap-2">
+              {SKELETON_SIZES.map((size, index) => (
+                <span
+                  key={index}
+                  className={`qassa-skeleton rounded-lg ${size}`}
+                />
+              ))}
+            </div>
+          )}
+
           {slotsMatchSelection && !slotsState.error && (
               <fieldset className="grid gap-3">
                 <legend className="font-semibold">
@@ -233,7 +254,7 @@ export function ShopBooking({
                     {t("noAvailableTimes")}
                   </p>
                 ) : (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="qassa-stagger flex flex-wrap gap-2">
                     {currentSlots.map((slot) => (
                       <label
                         key={slot}
@@ -294,7 +315,22 @@ export function ShopBooking({
               role="status"
               className="grid gap-3 rounded-xl border border-success/30 bg-success/10 p-5"
             >
-              <p className="font-semibold">{t("bookingConfirmed")}</p>
+              <div className="flex items-start gap-3">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="qassa-check size-7 shrink-0 text-success"
+                >
+                  <circle pathLength="1" cx="12" cy="12" r="10" className="opacity-25" />
+                  <path pathLength="1" d="M8 12.5 11 15.5 16.5 9.5" />
+                </svg>
+                <p className="font-semibold">{t("bookingConfirmed")}</p>
+              </div>
               <p className="text-sm">
                 {formatDate.format(new Date(selectedSlot))} ·{" "}
                 {formatTime.format(new Date(selectedSlot))}

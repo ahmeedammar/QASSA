@@ -33,7 +33,7 @@ export function StudioSetupNav({
           className="mt-2 h-1.5 overflow-hidden rounded-full bg-border"
         >
           <div
-            className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
+            className="qassa-fill-sheen h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
             style={{ width: `${(doneCount / steps.length) * 100}%` }}
           />
         </div>

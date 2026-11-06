@@ -18,7 +18,7 @@ export async function ShopCard({ shop, closedToday }: ShopCardProps) {
 
   return (
     <article className="qassa-card group flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card">
-      <span className="relative block aspect-4/3 overflow-hidden">
+      <span className="qassa-sheen relative block aspect-4/3 overflow-hidden">
         {coverUrl ? (
           <Image
             src={coverUrl}
@@ -44,7 +44,8 @@ export async function ShopCard({ shop, closedToday }: ShopCardProps) {
           </span>
         )}
         {closedToday && (
-          <span className="absolute bottom-3 start-3 rounded-full bg-[#0f1211]/75 px-3 py-1.5 text-xs font-semibold text-[#f2eee5] ring-1 ring-white/20">
+          <span className="absolute bottom-3 start-3 inline-flex items-center gap-2 rounded-full bg-[#0f1211]/75 px-3 py-1.5 text-xs font-semibold text-[#f2eee5] ring-1 ring-white/20">
+            <span aria-hidden="true" className="size-1.5 rounded-full bg-[#d96a55]" />
             {t("closedToday")}
           </span>
         )}
