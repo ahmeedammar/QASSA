@@ -307,3 +307,89 @@ select public.update_shop_media(
         :'shop_a' || '/gallery/00000000-0000-4000-a000-000000000013.jpg']);
 reset role;
 delete from storage.objects where bucket_id = 'shop-media';
+
+-- ── I. Weekly rest day (0018) ────────────────────────────────────────────────
+-- The rest day is the only closure a shop publishes, so choosing it must be a
+-- manager action, must reject nonsense weekdays, and must stay consistent with
+-- the opening-hours rows it replaces.
+
+reset role;
+select mod(extract(dow from :'day_d'::date)::int + 1, 7) as rest_day_2 \gset
+select (:'day_d'::date + 1) as day_rest_2 \gset
+
+set role anon;
+select set_config('request.jwt.claim.sub', '', false);
+select qassa_test.throws(
+  format('select public.set_shop_rest_day(%L::uuid, 2::smallint)', :'shop_a'),
+  '42501', 'anon cannot choose a shop rest day');
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'customer_1', false);
+select qassa_test.throws(
+  format('select public.set_shop_rest_day(%L::uuid, 2::smallint)', :'shop_a'),
+  '42501', 'a customer cannot choose a shop rest day');
+
+select set_config('request.jwt.claim.sub', :'owner_b', false);
+select qassa_test.throws(
+  format('select public.set_shop_rest_day(%L::uuid, 2::smallint)', :'shop_a'),
+  '42501', 'another shop owner cannot choose shop_a rest day');
+
+select set_config('request.jwt.claim.sub', :'owner_a', false);
+select qassa_test.throws(
+  'select public.set_shop_rest_day(' || quote_literal(:'shop_a') || '::uuid, 7::smallint)',
+  '22023', 'weekday 7 is not a rest day');
+select qassa_test.throws(
+  'select public.set_shop_rest_day(' || quote_literal(:'shop_a') || '::uuid, null)',
+  '22023', 'a missing weekday is rejected');
+
+select qassa_test.ok(
+  public.set_shop_rest_day(:'shop_a', :'rest_day_2'::smallint),
+  'owner chooses a new rest day');
+select qassa_test.ok(
+  (select closed_weekday from public.barbershops where id = :'shop_a') = :'rest_day_2'::smallint,
+  'the rest day is stored on the shop');
+select qassa_test.ok(
+  not exists (
+    select 1 from public.shop_business_hours
+    where shop_id = :'shop_a' and weekday = :'rest_day_2'::int
+  )
+  and (select count(*) from public.get_available_slots(
+         :'shop_a', :'barber_a1', :'service_a', :'day_rest_2')) = 0,
+  'moving the rest day drops that weekday hours and sells nothing');
+select qassa_test.ok(
+  (select count(*) from public.get_available_slots(
+     :'shop_a', :'barber_a1', :'service_a', :'day_d')) > 0,
+  'the other open weekdays keep their slots');
+
+select qassa_test.throws(
+  format('insert into public.shop_business_hours (shop_id, weekday, opens_at, closes_at) '
+    || 'values (%L, %L, %L, %L)', :'shop_a', :'rest_day_2'::int, '09:00', '19:00'),
+  '22023', 'opening hours cannot be added on the rest day');
+
+-- A shop that never picks a rest day is not publishable. shop_b stays out of
+-- the booking assertions above, so it can carry this case.
+reset role;
+update public.barbershops set closed_weekday = null where id = :'shop_b';
+
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'owner_b', false);
+select qassa_test.ok(
+  public.shop_website_missing_requirements(:'shop_b') @> array['rest_day'],
+  'missing rest day is reported as a publication requirement');
+select qassa_test.ok(
+  (select public.set_shop_published(:'shop_b', true) -> 'missing')
+    @> '["rest_day"]'::jsonb,
+  'publishing is refused until a rest day is chosen');
+select qassa_test.ok(
+  public.set_shop_rest_day(:'shop_b', :'rest_day'::smallint),
+  'the owner of the incomplete shop picks its rest day');
+select qassa_test.ok(
+  public.shop_website_missing_requirements(:'shop_b') = '{}',
+  'choosing the rest day completes the shop');
+
+-- Leave shop_a as the fixtures configured it.
+reset role;
+update public.barbershops set closed_weekday = :'rest_day'::int where id = :'shop_a';
+insert into public.shop_business_hours (shop_id, weekday, opens_at, closes_at)
+select :'shop_a'::uuid, :'rest_day_2'::int, '09:00', '19:00';
+reset role;

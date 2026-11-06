@@ -11,7 +11,7 @@ select ((:'day_d'::date + time '10:00') at time zone 'Africa/Tunis') as slot_100
        ((:'day_d'::date + time '12:15') at time zone 'Africa/Tunis') as slot_1215,
        ((:'day_d'::date + time '12:30') at time zone 'Africa/Tunis') as slot_1230,
        ((:'day_d'::date + time '14:00') at time zone 'Africa/Tunis') as slot_1400,
-       ((:'day_holiday'::date + time '10:00') at time zone 'Africa/Tunis') as slot_holiday,
+       ((:'day_rest'::date + time '10:00') at time zone 'Africa/Tunis') as slot_rest,
        (((now() at time zone 'Africa/Tunis')::date + 61 + time '10:00')
          at time zone 'Africa/Tunis') as slot_too_far,
        (((now() at time zone 'Africa/Tunis')::date - 1 + time '10:00')
@@ -40,8 +40,15 @@ select qassa_test.ok(
               where slot_start = :'slot_1400'),
   'slots just before and after the break remain open');
 select qassa_test.ok(
-  (select count(*) from public.get_available_slots(:'shop_a', :'barber_a1', :'service_a', :'day_holiday')) = 0,
-  'shop holiday has no slots');
+  (select count(*) from public.get_available_slots(:'shop_a', :'barber_a1', :'service_a', :'day_rest')) = 0,
+  'the weekly rest day has no slots');
+select qassa_test.ok(
+  (extract(dow from :'day_rest'::date)::int = :'rest_day'::int)
+  and not exists (
+    select 1 from public.shop_business_hours
+    where shop_id = :'shop_a' and weekday = :'rest_day'::int
+  ),
+  'a rest day carries no opening hours');
 select qassa_test.ok(
   (select count(*) from public.get_available_slots(:'shop_a', :'barber_a2', :'service_a', :'day_d')) = 0,
   'barber without the service assignment or schedule has no slots');
@@ -104,8 +111,8 @@ select qassa_test.throws(
   'P0001', 'start time beyond the 60-day window is rejected');
 select qassa_test.throws(
   format('select public.book_appointment(%L, %L, %L, %L, %L)',
-    :'shop_a', :'barber_a1', :'service_a', :'slot_holiday', gen_random_uuid()),
-  'P0001', 'holiday start time is rejected');
+    :'shop_a', :'barber_a1', :'service_a', :'slot_rest', gen_random_uuid()),
+  'P0001', 'rest day start time is rejected');
 select qassa_test.throws(
   format('select public.book_appointment(%L, %L, %L, %L, %L)',
     :'shop_a', :'barber_a1', :'service_a', :'slot_1230', gen_random_uuid()),

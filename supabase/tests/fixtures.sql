@@ -37,9 +37,17 @@ insert into public.platform_admins (user_id, role) values
   (:'support_admin', 'support_admin'),
   (:'finance_admin', 'finance_admin');
 
-insert into public.barbershops (id, owner_id, name, slug, city) values
-  (:'shop_a', :'owner_a', 'Scratch Shop A', 'scratch-shop-a', 'Tunis'),
-  (:'shop_b', :'owner_b', 'Scratch Shop B', 'scratch-shop-b', 'Sfax');
+-- ── availability calendar ──
+-- day_d is one week out; the weekly rest day is three weekdays later, so neither
+-- day_d nor day_d + 1 accidentally lands on a closed day, and day_rest is the
+-- first date that actually is one.
+select (now() at time zone 'Africa/Tunis')::date + 7 as day_d \gset
+select mod(extract(dow from :'day_d'::date)::int + 3, 7) as rest_day \gset
+select (:'day_d'::date + 3) as day_rest \gset
+
+insert into public.barbershops (id, owner_id, name, slug, city, closed_weekday) values
+  (:'shop_a', :'owner_a', 'Scratch Shop A', 'scratch-shop-a', 'Tunis', :'rest_day'::int),
+  (:'shop_b', :'owner_b', 'Scratch Shop B', 'scratch-shop-b', 'Sfax', :'rest_day'::int);
 
 insert into public.shop_members (shop_id, user_id, role) values
   (:'shop_a', :'owner_a', 'owner'),
@@ -62,10 +70,13 @@ insert into public.barber_services (shop_id, barber_id, service_id) values
   (:'shop_a', :'barber_a1', :'service_a'),
   (:'shop_b', :'barber_b', :'service_b');
 
+-- Opening hours cover every weekday except the shop's rest day, which the
+-- 0018 trigger refuses to accept hours for.
 insert into public.shop_business_hours (shop_id, weekday, opens_at, closes_at)
 select shop_id, weekday, '09:00', '19:00'
 from (values (:'shop_a'::uuid), (:'shop_b'::uuid)) as shops(shop_id)
-cross join generate_series(0, 6) as weekday;
+cross join generate_series(0, 6) as weekday
+where weekday <> :'rest_day'::int;
 
 insert into public.barber_schedules (shop_id, barber_id, weekday, starts_at, ends_at)
 select shop_id, barber_id, weekday, '09:00', '19:00'
@@ -78,12 +89,6 @@ cross join generate_series(0, 6) as weekday;
 insert into public.barber_breaks (shop_id, barber_id, weekday, starts_at, ends_at)
 select :'shop_a', :'barber_a1', weekday, '13:00', '14:00'
 from generate_series(0, 6) as weekday;
-
--- Booking day one week out, and a shop-A holiday the day after.
-select (now() at time zone 'Africa/Tunis')::date + 7 as day_d \gset
-select (:'day_d'::date + 1) as day_holiday \gset
-insert into public.shop_holidays (shop_id, holiday_date)
-values (:'shop_a', :'day_holiday');
 
 -- Storefront media, because the publication guard expects a real gallery.
 -- These paths also exercise the media trigger against each shop's own folder.

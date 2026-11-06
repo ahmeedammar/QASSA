@@ -151,11 +151,9 @@ export const saveBarberDayOffSchema = z
     message: "ends_after_start",
   });
 
-export const saveShopHolidaySchema = z.object({
+export const saveShopRestDaySchema = z.object({
   shopId: shopIdSchema,
-  holidayId: shopIdSchema.optional(),
-  holidayDate: dateSchema,
-  reason: optionalText(250),
+  weekday: weekdaySchema,
 });
 
 export const deleteStudioScheduleSchema = z.object({
@@ -167,7 +165,7 @@ export const deleteStudioScheduleSchema = z.object({
 export const deleteStudioExceptionSchema = z.object({
   shopId: shopIdSchema,
   recordId: shopIdSchema,
-  kind: z.enum(["break", "day_off", "holiday"]),
+  kind: z.enum(["break", "day_off"]),
 });
 
 export const updateStudioAppointmentSchema = z.object({

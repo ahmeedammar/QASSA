@@ -4,7 +4,7 @@ import {
   saveBarberBreakSchema,
   saveBarberDayOffSchema,
   saveShopBarberSchema,
-  saveShopHolidaySchema,
+  saveShopRestDaySchema,
   saveShopServiceSchema,
   updateStudioAppointmentSchema,
   saveBusinessHoursSchema,
@@ -201,20 +201,16 @@ describe("Studio content validation", () => {
         reason: "",
       }).success,
     ).toBe(false);
-    expect(
-      saveShopHolidaySchema.safeParse({
-        shopId,
-        holidayDate: "2026-12-25",
-        reason: "",
-      }).success,
-    ).toBe(true);
-    expect(
-      saveShopHolidaySchema.safeParse({
-        shopId,
-        holidayDate: "2026-13-25",
-        reason: "",
-      }).success,
-    ).toBe(false);
+  });
+
+  it("requires the weekly rest day to be a real weekday", () => {
+    for (const weekday of ["0", "1", "6"]) {
+      expect(saveShopRestDaySchema.safeParse({ shopId, weekday }).success).toBe(true);
+    }
+    for (const weekday of ["7", "-1", "", "1.5", "Monday"]) {
+      expect(saveShopRestDaySchema.safeParse({ shopId, weekday }).success).toBe(false);
+    }
+    expect(saveShopRestDaySchema.safeParse({ shopId }).success).toBe(false);
   });
 
   it("only allows supported Studio appointment outcomes", () => {

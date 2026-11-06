@@ -23,6 +23,7 @@ const publicShopSchema = z.object({
     "minimal_studio",
     "dark_prestige",
   ]),
+  closed_weekday: z.number().int().min(0).max(6).nullable(),
 });
 
 const publicServiceSchema = z.object({
@@ -64,9 +65,10 @@ function escapeLikePattern(value: string): string {
 }
 
 export const MARKETPLACE_PAGE_SIZE = 12;
+export const MARKETPLACE_CITY_LIMIT = 8;
 
 const SHOP_COLUMNS =
-  "id, name, slug, city, address, phone, description, logo_path, cover_path, gallery_paths, template_id";
+  "id, name, slug, city, address, phone, description, logo_path, cover_path, gallery_paths, template_id, closed_weekday";
 
 export async function listPublicShops({
   search,
@@ -105,6 +107,39 @@ export async function listPublicShops({
   }
 
   return { ok: true as const, shops: parsedShops.data, count: count ?? 0 };
+}
+
+/**
+ * Cities customers can jump to from the Discover hero, busiest first.
+ * Failures degrade to "no quick filters" rather than blocking the page.
+ */
+export async function listMarketplaceCities(limit = MARKETPLACE_CITY_LIMIT) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("public_barbershops")
+    .select("city")
+    .not("city", "is", null)
+    .range(0, 499);
+
+  if (error) {
+    console.error("Failed to load marketplace cities", error);
+    return [];
+  }
+
+  const counts = new Map<string, number>();
+  for (const row of data ?? []) {
+    const city = typeof row.city === "string" ? row.city.trim() : "";
+    if (city) counts.set(city, (counts.get(city) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .sort(
+      (a, b) =>
+        b[1] - a[1] ||
+        new Intl.Collator("fr", { sensitivity: "base" }).compare(a[0], b[0]),
+    )
+    .slice(0, limit)
+    .map(([city]) => city);
 }
 
 export const getPublicShopBySlug = cache(

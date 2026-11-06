@@ -192,6 +192,69 @@ body {
   box-shadow: 0 22px 40px -26px rgb(0 0 0 / 0.5);
 }
 
+.qassa-zoom {
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Directional glyphs are authored LTR and mirrored for Arabic. */
+[dir="rtl"] .qassa-arrow {
+  display: inline-block;
+  transform: scaleX(-1);
+}
+
+.qassa-card:hover .qassa-zoom {
+  transform: scale(1.06);
+}
+
+/* Discover hero clip: two animations on one element, so they are declared
+   together instead of fighting over the `animation` shorthand. */
+@keyframes qassa-video-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.7;
+  }
+}
+
+.qassa-hero-video {
+  opacity: 0.7;
+  animation:
+    qassa-ken-burns 20s ease-in-out infinite alternate,
+    qassa-video-fade 1.4s ease-out 0.15s both;
+}
+
+@keyframes qassa-ping {
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.qassa-ping {
+  animation: qassa-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Motion-free stand-in for the Discover hero video. */
+@keyframes qassa-aurora {
+  from {
+    background-position: 0% 0%;
+  }
+  to {
+    background-position: 100% 100%;
+  }
+}
+
+.qassa-aurora {
+  background-image:
+    radial-gradient(45% 55% at 22% 28%, rgb(23 107 104 / 0.55), transparent 70%),
+    radial-gradient(40% 50% at 78% 22%, rgb(184 155 112 / 0.45), transparent 70%),
+    radial-gradient(60% 60% at 60% 82%, rgb(197 185 159 / 0.32), transparent 70%);
+  background-size: 170% 170%;
+  animation: qassa-aurora 18s ease-in-out infinite alternate;
+}
+
 /* Hover-expand gallery: the focused panel claims the width, the rest breathe. */
 /* Display stays with the Tailwind utilities so the responsive switch
    (`hidden lg:flex`) is not overridden by this later rule. */
@@ -266,8 +329,15 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .qassa-ken-burns,
   .qassa-reveal-in,
-  .qassa-slide-in {
+  .qassa-slide-in,
+  .qassa-ping,
+  .qassa-hero-video,
+  .qassa-aurora {
     animation: none;
+  }
+
+  .qassa-ping {
+    opacity: 0;
   }
 
   .qassa-reveal {
@@ -277,6 +347,7 @@ body {
   .qassa-cta,
   .qassa-cta::after,
   .qassa-card,
+  .qassa-zoom,
   .qassa-accordion-panel,
   .qassa-accordion-caption,
   .qassa-slot {
@@ -286,6 +357,10 @@ body {
   .qassa-cta:hover,
   .qassa-card:hover,
   .qassa-slot:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .qassa-card:hover .qassa-zoom {
     transform: none;
   }
 }

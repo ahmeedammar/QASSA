@@ -13,9 +13,9 @@ import {
   saveBarberDayOffSchema,
   saveBarberScheduleSchema,
   saveBusinessHoursSchema,
-  saveShopHolidaySchema,
   saveShopBarberSchema,
   saveShopMediaSchema,
+  saveShopRestDaySchema,
   saveShopServiceSchema,
   setBarberServicesSchema,
   setShopContentActiveSchema,
@@ -230,6 +230,7 @@ export async function setShopPublished(
           "shop_hours",
           "barber_schedules",
           "shop_media",
+          "rest_day",
         ]),
       ),
     })
@@ -621,43 +622,31 @@ export async function saveBarberDayOff(
   return { success: "saved" };
 }
 
-export async function saveShopHoliday(
+export async function saveShopRestDay(
   _previousState: StudioActionState,
   formData: FormData,
 ): Promise<StudioActionState> {
-  const parsed = saveShopHolidaySchema.safeParse({
+  const parsed = saveShopRestDaySchema.safeParse({
     shopId: formData.get("shopId"),
-    holidayId: formData.get("holidayId") || undefined,
-    holidayDate: formData.get("holidayDate"),
-    reason: formData.get("reason") ?? "",
+    weekday: formData.get("weekday"),
   });
   if (!parsed.success) return { error: "invalid_input" };
 
   const access = await prepareStudioMutation(parsed.data.shopId);
   if (!access.ok) return access.state;
-  const { shopId, holidayId, holidayDate, reason } = parsed.data;
-  const values = { holiday_date: holidayDate, reason };
-  const result = holidayId
-    ? await access.supabase
-        .from("shop_holidays")
-        .update(values)
-        .eq("shop_id", shopId)
-        .eq("id", holidayId)
-        .select("id")
-        .maybeSingle()
-    : await access.supabase
-        .from("shop_holidays")
-        .insert({ ...values, shop_id: shopId })
-        .select("id")
-        .maybeSingle();
+  const { error } = await access.supabase.rpc("set_shop_rest_day", {
+    p_shop_id: parsed.data.shopId,
+    p_weekday: parsed.data.weekday,
+  });
 
-  if (result.error || !result.data) {
-    if (result.error?.code === "23505") return { error: "already_exists" };
-    if (result.error) console.error("Failed to save shop holiday", result.error);
+  if (error) {
+    if (error.code === "42501") return { error: "forbidden" };
+    if (error.code === "22023") return { error: "invalid_input" };
+    console.error("Failed to save the shop rest day", error);
     return { error: "failed" };
   }
 
-  revalidateStudio(shopId, await getLocale());
+  revalidateStudio(parsed.data.shopId, await getLocale());
   return { success: "saved" };
 }
 
@@ -675,30 +664,13 @@ export async function deleteStudioException(
   const access = await prepareStudioMutation(parsed.data.shopId);
   if (!access.ok) return access.state;
   const { shopId, recordId, kind } = parsed.data;
-  const result =
-    kind === "break"
-      ? await access.supabase
-          .from("barber_breaks")
-          .delete()
-          .eq("shop_id", shopId)
-          .eq("id", recordId)
-          .select("id")
-          .maybeSingle()
-      : kind === "day_off"
-        ? await access.supabase
-            .from("barber_days_off")
-            .delete()
-            .eq("shop_id", shopId)
-            .eq("id", recordId)
-            .select("id")
-            .maybeSingle()
-        : await access.supabase
-            .from("shop_holidays")
-            .delete()
-            .eq("shop_id", shopId)
-            .eq("id", recordId)
-            .select("id")
-            .maybeSingle();
+  const result = await access.supabase
+    .from(kind === "break" ? "barber_breaks" : "barber_days_off")
+    .delete()
+    .eq("shop_id", shopId)
+    .eq("id", recordId)
+    .select("id")
+    .maybeSingle();
 
   if (result.error || !result.data) {
     if (result.error) console.error("Failed to delete Studio availability exception", result.error);

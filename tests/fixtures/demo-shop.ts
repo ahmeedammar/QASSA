@@ -16,6 +16,7 @@ export const demoShop: PublicShopWebsite = {
     "c8763e0a-4550-4dd1-9916-0663473a22c1/gallery/9b1deb4d-3b7d-4fbd-8e2f-5bed4e9c0a14.png",
   ],
   template_id: "classic_gentleman",
+  closed_weekday: 6,
   services: [
     {
       id: "fa9db916-9d6c-4680-8934-bae60848f9a0",

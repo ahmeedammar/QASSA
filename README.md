@@ -86,16 +86,18 @@ responses; they do not create or modify Supabase records.
    migration `0012`. Customers can check live availability, book with
    idempotency protection, view recent/upcoming appointments, and cancel future
    bookings.
-3. **In progress — Booking foundation:** schedules, holidays, slot availability,
+3. **In progress — Booking foundation:** schedules, slot availability,
    idempotent booking, cancellation and database-level overlap prevention are
-   deployed in migration `0008`; Studio now manages weekly schedules, recurring
-   barber breaks, barber time off, shop holidays, and appointment management.
+   deployed in migration `0008`; Studio now manages the mandatory weekly rest
+   day (`0018`), weekly schedules, recurring barber breaks, barber time off, and
+   appointment management.
    The online customer booking and appointment self-service flow is implemented
    and covered with isolated sample-data tests; database-backed end-to-end
    verification still needs a local or dedicated development Supabase project.
-4. **In progress — QASSA Studio:** localized management now covers services,
-   barber profiles and assignments, shop opening hours, weekly barber schedules,
-   recurring breaks, barber time off, shop holidays, and appointments.
+4. **In progress — QASSA Studio:** localized management is split into a
+   six-step setup wizard covering services, barber profiles and assignments,
+   the weekly rest day with shop opening hours, weekly barber schedules,
+   recurring breaks, barber time off, shop media, and publishing.
 5. **In progress — QASSA Control:** authenticated administrators can open a
    localized Control area, complete TOTP MFA, list every shop, and suspend or
    restore shops. Suspension is enforced in the database so owners cannot

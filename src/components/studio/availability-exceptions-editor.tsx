@@ -10,7 +10,6 @@ import {
   deleteStudioException,
   saveBarberBreak,
   saveBarberDayOff,
-  saveShopHoliday,
   type StudioActionState,
 } from "@/lib/actions/studio";
 
@@ -27,12 +26,6 @@ export type StudioBarberDayOff = {
   barber_id: string;
   starts_on: string;
   ends_on: string;
-  reason: string | null;
-};
-
-export type StudioShopHoliday = {
-  id: string;
-  holiday_date: string;
   reason: string | null;
 };
 
@@ -57,7 +50,7 @@ function ExceptionRemoveForm({
 }: {
   shopId: string;
   recordId: string;
-  kind: "break" | "day_off" | "holiday";
+  kind: "break" | "day_off";
 }) {
   const t = useTranslations("studio");
   const [state, formAction, pending] = useActionState<StudioActionState, FormData>(
@@ -192,65 +185,16 @@ function BarberDayOffForm({
   );
 }
 
-function ShopHolidayForm({
-  shopId,
-  holiday,
-}: {
-  shopId: string;
-  holiday?: StudioShopHoliday;
-}) {
-  const t = useTranslations("studio");
-  const [state, formAction, pending] = useActionState<StudioActionState, FormData>(
-    saveShopHoliday,
-    {},
-  );
-
-  return (
-    <form action={formAction} className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_2fr_auto]">
-      <input type="hidden" name="shopId" value={shopId} />
-      {holiday && <input type="hidden" name="holidayId" value={holiday.id} />}
-      <label className="grid gap-2 text-sm font-medium">
-        {t("holidayDate")}
-        <input
-          type="date"
-          name="holidayDate"
-          required
-          defaultValue={holiday?.holiday_date ?? ""}
-          className={inputClasses()}
-        />
-      </label>
-      <label className="grid gap-2 text-sm font-medium">
-        {t("reasonOptional")}
-        <input
-          type="text"
-          name="reason"
-          maxLength={250}
-          defaultValue={holiday?.reason ?? ""}
-          className={inputClasses()}
-        />
-      </label>
-      <button type="submit" disabled={pending} className={buttonClasses("primary", "md")}>
-        {pending ? t("saving") : holiday ? t("saveChanges") : t("addHoliday")}
-      </button>
-      <div className="sm:col-span-2 lg:col-span-3">
-        <StudioActionFeedback state={state} />
-      </div>
-    </form>
-  );
-}
-
 export function AvailabilityExceptionsEditor({
   shopId,
   barbers,
   breaks,
   daysOff,
-  holidays,
 }: {
   shopId: string;
   barbers: StudioBarber[];
   breaks: StudioBarberBreak[];
   daysOff: StudioBarberDayOff[];
-  holidays: StudioShopHoliday[];
 }) {
   const t = useTranslations("studio");
 
@@ -331,28 +275,6 @@ export function AvailabilityExceptionsEditor({
             );
           })
         )}
-      </div>
-
-      <div className="grid gap-5 border-t border-border pt-6">
-        <div>
-          <h3 className="font-semibold">{t("shopHolidaysTitle")}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">{t("shopHolidaysDescription")}</p>
-        </div>
-        {holidays.map((holiday) => (
-          <article
-            key={holiday.id}
-            className="grid gap-4 rounded-xl border border-border p-4 md:grid-cols-[minmax(0,1fr)_auto]"
-          >
-            <ShopHolidayForm shopId={shopId} holiday={holiday} />
-            <ExceptionRemoveForm shopId={shopId} recordId={holiday.id} kind="holiday" />
-          </article>
-        ))}
-        {holidays.length === 0 && (
-          <p className="text-sm text-muted-foreground">{t("noShopHolidaysYet")}</p>
-        )}
-        <div className="border-t border-border pt-4">
-          <ShopHolidayForm shopId={shopId} />
-        </div>
       </div>
     </section>
   );

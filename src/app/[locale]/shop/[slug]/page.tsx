@@ -254,25 +254,35 @@ export default async function ShopWebsitePage({ params }: ShopPageProps) {
               <ul
                 className={`mt-5 grid gap-3 rounded-2xl border p-6 sm:grid-cols-2 lg:grid-cols-3 ${template.panel}`}
               >
-                {shop.businessHours.map((hours) => {
-                  const isToday = hours.weekday === todayWeekday;
+                {[1, 2, 3, 4, 5, 6, 0].map((weekday) => {
+                  const isToday = weekday === todayWeekday;
+                  const dayHours = shop.businessHours.filter(
+                    (hours) => hours.weekday === weekday,
+                  );
                   return (
                     <li
-                      key={hours.id}
+                      key={weekday}
                       className={`flex items-center justify-between gap-4 rounded-xl px-3 py-2 ${
                         isToday ? `font-semibold ${template.accent}` : ""
                       }`}
                     >
                       <span className="flex items-center gap-2">
-                        {weekdayFormat.format(new Date(Date.UTC(2024, 0, 7 + hours.weekday)))}
+                        {weekdayFormat.format(new Date(Date.UTC(2024, 0, 7 + weekday)))}
                         {isToday && (
                           <span className="text-xs font-semibold uppercase tracking-wide">
                             {t("todayBadge")}
                           </span>
                         )}
                       </span>
-                      <span dir="ltr">
-                        {hours.opens_at.slice(0, 5)}–{hours.closes_at.slice(0, 5)}
+                      <span dir="ltr" className={dayHours.length ? "" : "opacity-70"}>
+                        {dayHours.length
+                          ? dayHours
+                              .map(
+                                (hours) =>
+                                  `${hours.opens_at.slice(0, 5)}–${hours.closes_at.slice(0, 5)}`,
+                              )
+                              .join(", ")
+                          : t("closedDay")}
                       </span>
                     </li>
                   );

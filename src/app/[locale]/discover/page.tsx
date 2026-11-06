@@ -1,7 +1,10 @@
-import Image from "next/image";
 import { getTranslations } from "next-intl/server";
+import { DiscoverHero } from "@/components/discover/discover-hero";
+import { ShopCard } from "@/components/discover/shop-card";
+import { Reveal } from "@/components/shop/reveal";
 import { Link } from "@/i18n/navigation";
 import {
+  listMarketplaceCities,
   listPublicShops,
   MARKETPLACE_PAGE_SIZE,
 } from "@/lib/shops/marketplace";
@@ -9,8 +12,6 @@ import {
   parseMarketplaceFilter,
   parseMarketplacePage,
 } from "@/lib/shops/filters";
-import { publicMediaUrl } from "@/lib/shops/media";
-import { SHOP_TEMPLATES } from "@/lib/shops/templates";
 
 export const instant = false;
 
@@ -22,10 +23,22 @@ type DiscoverPageProps = {
   }>;
 };
 
+/** Weekday (0 = Sunday, matching `closed_weekday`) in the shop's own timezone. */
+function tunisWeekday(now = new Date()) {
+  const iso = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Tunis",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+  return new Date(`${iso}T00:00:00Z`).getUTCDay();
+}
+
 export default async function DiscoverPage({ searchParams }: DiscoverPageProps) {
-  const [t, params] = await Promise.all([
+  const [t, params, cities] = await Promise.all([
     getTranslations("discover"),
     searchParams,
+    listMarketplaceCities(),
   ]);
   const search = parseMarketplaceFilter(params.q);
   const city = parseMarketplaceFilter(params.city);
@@ -45,158 +58,143 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
     ...(search.value ? { q: search.value } : {}),
     ...(city.value ? { city: city.value } : {}),
   };
+  const todayWeekday = tunisWeekday();
+  const isBrowsing = !search.value && !city.value && page.value === 1;
+  const steps = [
+    { title: t("stepsPick"), text: t("stepsPickText") },
+    { title: t("stepsTime"), text: t("stepsTimeText") },
+    { title: t("stepsVisit"), text: t("stepsVisitText") },
+  ];
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
-      <header className="mb-10 max-w-2xl">
-        <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-          QASSA · قصّة
-        </p>
-        <h1 className="font-display text-3xl font-bold sm:text-4xl">
-          {t("title")}
-        </h1>
-        <p className="mt-3 text-muted-foreground">{t("description")}</p>
-      </header>
+    <>
+      <DiscoverHero
+        search={search.value}
+        city={city.value}
+        cities={cities}
+        shopCount={result?.ok ? result.count : 0}
+      />
 
-      <form
-        action=""
-        method="get"
-        className="mb-8 grid gap-4 rounded-2xl border border-border bg-card p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end"
-      >
-        <label className="grid gap-2 text-sm font-medium">
-          {t("searchLabel")}
-          <input
-            type="search"
-            name="q"
-            defaultValue={search.value}
-            maxLength={80}
-            placeholder={t("searchPlaceholder")}
-            className="h-11 rounded-lg border border-border bg-background px-3 font-normal text-foreground"
-          />
-        </label>
-        <label className="grid gap-2 text-sm font-medium">
-          {t("cityLabel")}
-          <input
-            type="text"
-            name="city"
-            defaultValue={city.value}
-            maxLength={80}
-            placeholder={t("cityPlaceholder")}
-            className="h-11 rounded-lg border border-border bg-background px-3 font-normal text-foreground"
-          />
-        </label>
-        <button
-          type="submit"
-          className="h-11 rounded-lg bg-primary px-6 font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-        >
-          {t("searchButton")}
-        </button>
-      </form>
-
-      {!validFilters ? (
-        <p role="alert" className="rounded-xl border border-danger/30 bg-danger/5 p-5 text-danger">
-          {t("invalidFilters")}
-        </p>
-      ) : result && !result.ok ? (
-        <p role="alert" className="rounded-xl border border-danger/30 bg-danger/5 p-5 text-danger">
-          {t("loadError")}
-        </p>
-      ) : result?.ok && result.shops.length ? (
-        <>
-          <p className="mb-5 text-sm text-muted-foreground" aria-live="polite">
-            {t("results", { count: result.count })}
+      <main className="mx-auto max-w-6xl px-6 pb-16 pt-10 sm:px-8">
+        {!validFilters ? (
+          <p role="alert" className="rounded-xl border border-danger/30 bg-danger/5 p-5 text-danger">
+            {t("invalidFilters")}
           </p>
-          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {result.shops.map((shop) => {
-              const coverUrl = publicMediaUrl(shop.cover_path);
-              const template = SHOP_TEMPLATES[shop.template_id];
-              return (
-                <li key={shop.id}>
-                  <article className="qassa-card flex h-full flex-col rounded-2xl border border-border bg-card p-4">
-                    <span className="relative block aspect-16/9 overflow-hidden rounded-xl">
-                      {coverUrl ? (
-                        <Image
-                          src={coverUrl}
-                          alt=""
-                          fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          className="object-cover transition-transform duration-500 hover:scale-105"
-                        />
-                      ) : (
-                        <span
-                          className={`grid h-full place-items-center font-display text-sm font-semibold tracking-[0.2em] ${template.preview}`}
-                        >
-                          QASSA · {t(`templates.${template.label}`)}
-                        </span>
-                      )}
-                    </span>
-                    <h2 className="mt-4 font-display text-xl font-bold">{shop.name}</h2>
-                    {(shop.city || shop.address) && (
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {[shop.city, shop.address].filter(Boolean).join(" · ")}
-                      </p>
-                    )}
-                    {shop.description && (
-                      <p className="mt-4 line-clamp-3 text-sm leading-6 text-muted-foreground">
-                        {shop.description}
-                      </p>
-                    )}
-                    <Link
-                      href={`/shop/${encodeURIComponent(shop.slug)}`}
-                      className="mt-auto inline-flex min-h-11 items-center pt-5 font-semibold text-primary hover:underline"
+        ) : result && !result.ok ? (
+          <p role="alert" className="rounded-xl border border-danger/30 bg-danger/5 p-5 text-danger">
+            {t("loadError")}
+          </p>
+        ) : result?.ok && result.shops.length ? (
+          <>
+            <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
+              <h2 className="font-display text-2xl font-bold">
+                {city.value || search.value
+                  ? t("resultsFor", { term: city.value || search.value })
+                  : t("allShops")}
+              </h2>
+              <p className="text-sm text-muted-foreground" aria-live="polite">
+                {t("results", { count: result.count })}
+              </p>
+            </div>
+
+            <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {result.shops.map((shop, index) => (
+                <Reveal
+                  as="li"
+                  key={shop.id}
+                  delay={Math.min(index, 8) * 70}
+                  className="h-full"
+                >
+                  <ShopCard
+                    shop={shop}
+                    closedToday={shop.closed_weekday === todayWeekday}
+                  />
+                </Reveal>
+              ))}
+            </ul>
+
+            {pageCount > 1 && (
+              <nav
+                aria-label={t("paginationLabel")}
+                className="mt-10 flex items-center justify-between gap-4"
+              >
+                {page.value > 1 ? (
+                  <Link
+                    href={{
+                      pathname: "/discover",
+                      query: { ...query, page: String(page.value - 1) },
+                    }}
+                    className="min-h-11 rounded-lg border border-border px-4 py-2 font-medium transition-colors hover:bg-surface"
+                  >
+                    {t("previousPage")}
+                  </Link>
+                ) : (
+                  <span />
+                )}
+                <span className="text-sm text-muted-foreground">
+                  {t("pageOf", { page: page.value, pages: pageCount })}
+                </span>
+                {page.value < pageCount ? (
+                  <Link
+                    href={{
+                      pathname: "/discover",
+                      query: { ...query, page: String(page.value + 1) },
+                    }}
+                    className="qassa-cta min-h-11 rounded-lg bg-primary px-5 py-2 font-semibold text-primary-foreground"
+                  >
+                    {t("nextPage")}
+                  </Link>
+                ) : (
+                  <span />
+                )}
+              </nav>
+            )}
+
+            {isBrowsing && (
+              <Reveal as="section" className="mt-16">
+                <h2 className="text-center font-display text-2xl font-bold">
+                  {t("stepsTitle")}
+                </h2>
+                <ol className="mt-8 grid gap-5 sm:grid-cols-3">
+                  {steps.map((step, index) => (
+                    <li
+                      key={step.title}
+                      className="qassa-card rounded-3xl border border-border bg-card p-6"
                     >
-                      {t("visitShop")}
-                    </Link>
-                  </article>
-                </li>
-              );
-            })}
-          </ul>
-          {pageCount > 1 && (
-            <nav
-              aria-label={t("paginationLabel")}
-              className="mt-8 flex items-center justify-between gap-4"
-            >
-              {page.value > 1 ? (
-                <Link
-                  href={{
-                    pathname: "/discover",
-                    query: { ...query, page: String(page.value - 1) },
-                  }}
-                  className="min-h-11 rounded-lg border border-border px-4 py-2 font-medium hover:bg-surface"
-                >
-                  {t("previousPage")}
-                </Link>
-              ) : (
-                <span />
-              )}
-              <span className="text-sm text-muted-foreground">
-                {t("pageOf", { page: page.value, pages: pageCount })}
-              </span>
-              {page.value < pageCount ? (
-                <Link
-                  href={{
-                    pathname: "/discover",
-                    query: { ...query, page: String(page.value + 1) },
-                  }}
-                  className="min-h-11 rounded-lg border border-border px-4 py-2 font-medium hover:bg-surface"
-                >
-                  {t("nextPage")}
-                </Link>
-              ) : (
-                <span />
-              )}
-            </nav>
-          )}
-        </>
-      ) : (
-        <section className="rounded-2xl border border-border bg-card px-6 py-12 text-center">
-          <h2 className="font-display text-xl font-semibold">{t("emptyTitle")}</h2>
-          <p className="mx-auto mt-2 max-w-lg text-muted-foreground">
-            {search.value || city.value ? t("emptyFiltered") : t("empty")}
-          </p>
-        </section>
-      )}
-    </main>
+                      <span className="flex size-10 items-center justify-center rounded-full bg-primary/12 font-display text-lg font-bold text-primary">
+                        {index + 1}
+                      </span>
+                      <h3 className="mt-4 font-display text-lg font-semibold">
+                        {step.title}
+                      </h3>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        {step.text}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              </Reveal>
+            )}
+          </>
+        ) : (
+          <section className="rounded-3xl border border-border bg-card px-6 py-14 text-center">
+            <h2 className="font-display text-2xl font-semibold">
+              {t("emptyTitle")}
+            </h2>
+            <p className="mx-auto mt-3 max-w-lg text-muted-foreground">
+              {search.value || city.value ? t("emptyFiltered") : t("empty")}
+            </p>
+            {(search.value || city.value) && (
+              <Link
+                href="/discover"
+                className="qassa-cta mt-6 inline-flex min-h-11 items-center rounded-xl bg-primary px-6 font-semibold text-primary-foreground"
+              >
+                {t("clearFilters")}
+              </Link>
+            )}
+          </section>
+        )}
+      </main>
+    </>
   );
 }

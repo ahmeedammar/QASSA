@@ -8,6 +8,7 @@ import {
   deleteStudioSchedule,
   saveBarberSchedule,
   saveBusinessHours,
+  saveShopRestDay,
   type StudioActionState,
 } from "@/lib/actions/studio";
 import { StudioActionFeedback } from "@/components/studio/studio-action-feedback";
@@ -28,12 +29,16 @@ export type StudioBarberSchedule = {
   ends_at: string;
 };
 
+const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0];
+
 function WeekdaySelect({
   name = "weekday",
   defaultValue = 1,
+  exclude = null,
 }: {
   name?: string;
   defaultValue?: number;
+  exclude?: number | null;
 }) {
   const t = useTranslations("studio.weekdays");
 
@@ -43,12 +48,60 @@ function WeekdaySelect({
       defaultValue={String(defaultValue)}
       className={inputClasses()}
     >
-      {[1, 2, 3, 4, 5, 6, 0].map((day) => (
+      {WEEKDAYS.filter((day) => day !== exclude).map((day) => (
         <option key={day} value={day}>
           {t(String(day))}
         </option>
       ))}
     </select>
+  );
+}
+
+function ShopRestDayForm({
+  shopId,
+  restDay,
+}: {
+  shopId: string;
+  restDay: number | null;
+}) {
+  const t = useTranslations("studio");
+  const weekdays = useTranslations("studio.weekdays");
+  const [state, formAction, pending] = useActionState<StudioActionState, FormData>(
+    saveShopRestDay,
+    {},
+  );
+
+  return (
+    <form
+      action={formAction}
+      className="grid items-end gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[minmax(0,1fr)_auto]"
+    >
+      <input type="hidden" name="shopId" value={shopId} />
+      <label className="grid gap-2 text-sm font-medium">
+        {t("restDay")}
+        <select
+          name="weekday"
+          defaultValue={restDay === null ? "" : String(restDay)}
+          required
+          className={inputClasses()}
+        >
+          <option value="" disabled>
+            {t("restDayNotSet")}
+          </option>
+          {WEEKDAYS.map((day) => (
+            <option key={day} value={day}>
+              {weekdays(String(day))}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button type="submit" disabled={pending} className={buttonClasses("primary", "md")}>
+        {pending ? t("saving") : t("saveRestDay")}
+      </button>
+      <div className="sm:col-span-2">
+        <StudioActionFeedback state={state} />
+      </div>
+    </form>
   );
 }
 
@@ -87,9 +140,11 @@ function RemoveScheduleForm({
 function BusinessHoursForm({
   shopId,
   hours,
+  restDay,
 }: {
   shopId: string;
   hours?: StudioBusinessHour;
+  restDay: number | null;
 }) {
   const t = useTranslations("studio");
   const [state, formAction, pending] = useActionState<StudioActionState, FormData>(
@@ -103,7 +158,7 @@ function BusinessHoursForm({
       {hours && <input type="hidden" name="hoursId" value={hours.id} />}
       <label className="grid gap-2 text-sm font-medium">
         {t("weekday")}
-        <WeekdaySelect defaultValue={hours?.weekday ?? 1} />
+        <WeekdaySelect defaultValue={hours?.weekday ?? 1} exclude={restDay} />
       </label>
       <label className="grid gap-2 text-sm font-medium">
         {t("opensAt")}
@@ -227,11 +282,13 @@ export function ScheduleEditor({
   hours,
   barbers,
   schedules,
+  restDay,
 }: {
   shopId: string;
   hours: StudioBusinessHour[];
   barbers: StudioBarber[];
   schedules: StudioBarberSchedule[];
+  restDay: number | null;
 }) {
   const t = useTranslations("studio");
 
@@ -244,13 +301,22 @@ export function ScheduleEditor({
             {t("shopHoursDescription")}
           </p>
         </div>
+        <div className="grid gap-3">
+          <div>
+            <h3 className="font-semibold">{t("restDayTitle")}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("restDayDescription")}
+            </p>
+          </div>
+          <ShopRestDayForm shopId={shopId} restDay={restDay} />
+        </div>
         <div className="grid gap-5">
           {hours.map((row) => (
             <article
               key={row.id}
               className="grid gap-4 rounded-xl border border-border p-4 md:grid-cols-[minmax(0,1fr)_auto]"
             >
-              <BusinessHoursForm shopId={shopId} hours={row} />
+              <BusinessHoursForm shopId={shopId} hours={row} restDay={restDay} />
               <RemoveScheduleForm shopId={shopId} recordId={row.id} kind="hours" />
             </article>
           ))}
@@ -260,7 +326,7 @@ export function ScheduleEditor({
         </div>
         <div className="border-t border-border pt-6">
           <h3 className="mb-4 font-semibold">{t("addHours")}</h3>
-          <BusinessHoursForm shopId={shopId} />
+          <BusinessHoursForm shopId={shopId} restDay={restDay} />
         </div>
       </section>
 

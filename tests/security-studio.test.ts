@@ -6,13 +6,12 @@ import {
   setShopPublished,
   updateStudioAppointment,
   saveBarberSchedule,
-  saveShopHoliday,
+  saveShopRestDay,
   saveShopWebsite,
 } from "@/lib/actions/studio";
 import { demoShop } from "./fixtures/demo-shop";
 
-// IDs for the "other" shop used in cross-tenant tests.
-const SHOP_B_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+// The signed-in shop owner every action is called as.
 const USER_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
 const mocks = vi.hoisted(() => {
@@ -120,11 +119,10 @@ function barberScheduleForm(overrides: Record<string, string> = {}) {
   return fd;
 }
 
-function holidayForm(overrides: Record<string, string> = {}) {
+function restDayForm(overrides: Record<string, string> = {}) {
   const fd = new FormData();
   fd.set("shopId", overrides.shopId ?? demoShop.id);
-  fd.set("holidayDate", overrides.holidayDate ?? "2027-01-01");
-  fd.set("reason", overrides.reason ?? "New Year");
+  fd.set("weekday", overrides.weekday ?? "1");
   return fd;
 }
 
@@ -248,18 +246,35 @@ describe("C. Input validation", () => {
     expect(mocks.createClient).not.toHaveBeenCalled();
   });
 
-  it("saveShopHoliday() returns already_exists when Supabase returns error code 23505", async () => {
-    // The insert resolves with a unique-violation error.
-    mocks.maybeSingle.mockResolvedValueOnce(
-      // first call: authorizeShopManager → owner
-      { data: { role: "owner" }, error: null },
-    ).mockResolvedValueOnce(
-      // second call: the actual insert result
-      { data: null, error: { code: "23505", message: "duplicate key" } },
-    );
+  it("saveShopRestDay() returns forbidden when the RPC refuses manager access", async () => {
+    mocks.rpc.mockResolvedValue({
+      data: null,
+      error: { code: "42501", message: "Shop manager access required." },
+    });
 
-    const result = await saveShopHoliday({}, holidayForm());
-    expect(result).toEqual({ error: "already_exists" });
+    const result = await saveShopRestDay({}, restDayForm());
+    expect(result).toEqual({ error: "forbidden" });
+  });
+
+  it("saveShopRestDay() returns invalid_input when the weekday is refused", async () => {
+    mocks.rpc.mockResolvedValue({
+      data: null,
+      error: { code: "22023", message: "The weekly rest day must be a weekday between 0 and 6." },
+    });
+
+    const result = await saveShopRestDay({}, restDayForm());
+    expect(result).toEqual({ error: "invalid_input" });
+  });
+
+  it("saveShopRestDay() calls the RPC with the chosen weekday", async () => {
+    mocks.rpc.mockResolvedValue({ data: true, error: null });
+
+    const result = await saveShopRestDay({}, restDayForm({ weekday: "6" }));
+    expect(result).toEqual({ success: "saved" });
+    expect(mocks.rpc).toHaveBeenCalledWith("set_shop_rest_day", {
+      p_shop_id: demoShop.id,
+      p_weekday: 6,
+    });
   });
 
   it("saveShopWebsite() returns slug_taken when RPC returns error code 23505", async () => {
