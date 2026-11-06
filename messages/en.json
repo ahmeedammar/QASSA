@@ -53,7 +53,23 @@
       "classicGentleman": "Classic Gentleman",
       "minimalStudio": "Minimal Studio",
       "darkPrestige": "Dark Prestige"
-    }
+    },
+    "heroAria": "Introduction to {name}",
+    "heroServices": "{count, plural, one {# service} other {# services}}",
+    "heroFrom": "From {price}",
+    "heroBook": "Book now",
+    "heroCall": "Call",
+    "heroSlides": "Salon photos",
+    "heroSlideLabel": "Image {index} of {total}",
+    "galleryTitle": "In pictures",
+    "galleryHint": "Hover a photo, click to enlarge it.",
+    "galleryView": "Enlarge",
+    "galleryImageAria": "Photo {index} of {name}",
+    "galleryClose": "Close",
+    "galleryPrevious": "Previous photo",
+    "galleryNext": "Next photo",
+    "barberPhotoAria": "Portrait of {name}",
+    "todayBadge": "Today"
   },
   "booking": {
     "eyebrow": "Book online",
@@ -142,7 +158,7 @@
   },
   "studio": {
     "title": "QASSA Studio",
-    "description": "Set up and manage your barbershop on QASSA.",
+    "description": "Description",
     "yourShops": "Your shops",
     "published": "Published",
     "draft": "Not published",
@@ -156,7 +172,6 @@
     "city": "City",
     "address": "Street address",
     "phone": "Phone",
-    "description": "Description",
     "template": "Website style",
     "createShop": "Create shop",
     "creating": "Creating…",
@@ -205,7 +220,8 @@
       "services": "Add at least one active service.",
       "barber_services": "Assign an active service to at least one active barber.",
       "shop_hours": "Set the shop's opening hours.",
-      "barber_schedules": "Set working hours for at least one active barber."
+      "barber_schedules": "Set working hours for at least one active barber.",
+      "shop_media": "Add at least 3 photos of the salon."
     },
     "shopHoursTitle": "Shop opening hours",
     "shopHoursDescription": "Set the times customers can book at your shop. Times use Tunisia local time. Add multiple periods for split shifts.",
@@ -293,7 +309,29 @@
       "classicGentleman": "Classic Gentleman",
       "minimalStudio": "Minimal Studio",
       "darkPrestige": "Dark Prestige"
-    }
+    },
+    "mediaTitle": "Salon visuals",
+    "mediaDescription": "Upload the shopfront, the cuts and the team. Your site showcases them automatically.",
+    "mediaCover": "Cover photo",
+    "mediaLogo": "Logo",
+    "mediaGallery": "Gallery",
+    "mediaGalleryRequired": "{count, plural, one {Add # more photo before publishing.} other {Add # more photos before publishing.}}",
+    "mediaGalleryCount": "{count} of {max} photos",
+    "mediaSave": "Save visuals",
+    "mediaTips": "These visuals are {name}'s shopfront: natural light, sharp detail, nothing blurry.",
+    "mediaRemove": "Remove",
+    "mediaReplace": "Replace",
+    "mediaUploading": "Uploading…",
+    "mediaDropHint": "Click or drop an image",
+    "mediaAddImages": "Add photos",
+    "mediaMoveFirst": "Move to front",
+    "mediaMoveLast": "Move to end",
+    "mediaCoverPick": "Hero",
+    "mediaBarberPhoto": "Barber photo",
+    "mediaUnsupportedType": "Accepted formats: WebP, JPG, PNG or AVIF.",
+    "mediaTooLarge": "Image too large (5 MB maximum).",
+    "mediaUploadFailed": "Upload failed. Try again.",
+    "mediaGalleryLimit": "Gallery is full (12 photos maximum)."
   },
   "control": {
     "title": "QASSA Control",

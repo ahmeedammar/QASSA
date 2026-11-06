@@ -36,4 +36,23 @@ begin
 end;
 $$;
 
+-- For write attempts that RLS refuses by matching no visible row: the statement
+-- itself succeeds, so assert that nothing was touched instead of expecting an
+-- error. The API roles hold table privileges, so this is the normal outcome.
+create function qassa_test.affects_no_rows(p_sql text, p_label text)
+returns void
+language plpgsql
+as $$
+declare
+  v_rows integer;
+begin
+  execute p_sql;
+  get diagnostics v_rows = row_count;
+  if v_rows is distinct from 0 then
+    raise exception 'not ok - %: statement modified % rows', p_label, v_rows;
+  end if;
+  raise notice 'ok - %', p_label;
+end;
+$$;
+
 grant execute on all functions in schema qassa_test to anon, authenticated;

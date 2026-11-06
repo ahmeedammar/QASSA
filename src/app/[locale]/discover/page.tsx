@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import {
@@ -8,6 +9,8 @@ import {
   parseMarketplaceFilter,
   parseMarketplacePage,
 } from "@/lib/shops/filters";
+import { publicMediaUrl } from "@/lib/shops/media";
+import { SHOP_TEMPLATES } from "@/lib/shops/templates";
 
 export const instant = false;
 
@@ -104,29 +107,50 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
             {t("results", { count: result.count })}
           </p>
           <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {result.shops.map((shop) => (
-              <li key={shop.id}>
-                <article className="flex h-full flex-col rounded-2xl border border-border bg-card p-6">
-                  <h2 className="font-display text-xl font-bold">{shop.name}</h2>
-                  {(shop.city || shop.address) && (
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {[shop.city, shop.address].filter(Boolean).join(" · ")}
-                    </p>
-                  )}
-                  {shop.description && (
-                    <p className="mt-4 line-clamp-3 text-sm leading-6 text-muted-foreground">
-                      {shop.description}
-                    </p>
-                  )}
-                  <Link
+            {result.shops.map((shop) => {
+              const coverUrl = publicMediaUrl(shop.cover_path);
+              const template = SHOP_TEMPLATES[shop.template_id];
+              return (
+                <li key={shop.id}>
+                  <article className="qassa-card flex h-full flex-col rounded-2xl border border-border bg-card p-4">
+                    <span className="relative block aspect-16/9 overflow-hidden rounded-xl">
+                      {coverUrl ? (
+                        <Image
+                          src={coverUrl}
+                          alt=""
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover transition-transform duration-500 hover:scale-105"
+                        />
+                      ) : (
+                        <span
+                          className={`grid h-full place-items-center font-display text-sm font-semibold tracking-[0.2em] ${template.preview}`}
+                        >
+                          QASSA · {t(`templates.${template.label}`)}
+                        </span>
+                      )}
+                    </span>
+                    <h2 className="mt-4 font-display text-xl font-bold">{shop.name}</h2>
+                    {(shop.city || shop.address) && (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {[shop.city, shop.address].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                    {shop.description && (
+                      <p className="mt-4 line-clamp-3 text-sm leading-6 text-muted-foreground">
+                        {shop.description}
+                      </p>
+                    )}
+                    <Link
                       href={`/shop/${encodeURIComponent(shop.slug)}`}
-                    className="mt-auto inline-flex min-h-11 items-center pt-5 font-semibold text-primary hover:underline"
-                  >
-                    {t("visitShop")}
-                  </Link>
-                </article>
-              </li>
-            ))}
+                      className="mt-auto inline-flex min-h-11 items-center pt-5 font-semibold text-primary hover:underline"
+                    >
+                      {t("visitShop")}
+                    </Link>
+                  </article>
+                </li>
+              );
+            })}
           </ul>
           {pageCount > 1 && (
             <nav

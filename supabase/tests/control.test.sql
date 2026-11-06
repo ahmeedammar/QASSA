@@ -26,9 +26,18 @@ select qassa_test.throws(
 select qassa_test.throws(
   format('update public.barbershops set suspension_reason = %L where id = %L', 'self', :'shop_a'),
   '42501', 'shop owners cannot set a suspension reason');
+
+-- suspension_reason is intentionally outside the 0007 column grant, so a shop
+-- member cannot even read it; verify the outcome through the superuser instead.
+select qassa_test.throws(
+  'select suspension_reason from public.barbershops limit 0',
+  '42501', 'shop owners cannot read the suspension reason column');
+
+reset role;
 select qassa_test.ok(
   (select not is_suspended and suspension_reason is null from public.barbershops where id = :'shop_a'),
   'refused owner updates leave the shop unsuspended');
+set role authenticated;
 
 select set_config('request.jwt.claim.sub', :'support_admin', false);
 select qassa_test.ok(
@@ -50,9 +59,11 @@ select qassa_test.throws(
 select qassa_test.ok(
   public.set_shop_suspension(:'shop_a', true, '  Policy violation  ') = true,
   'operations admin suspends a shop');
+-- Admins see these private columns through the definer RPC; 0007 deliberately
+-- never grants suspension_reason on the bare table to any API role.
 select qassa_test.ok(
   (select is_suspended and suspension_reason = 'Policy violation'
-     from public.barbershops where id = :'shop_a'),
+     from public.list_platform_shops() where id = :'shop_a'),
   'suspension flag and trimmed reason are stored');
 select qassa_test.ok(
   not exists (select 1 from public.public_barbershops where id = :'shop_a'),
@@ -75,7 +86,7 @@ select qassa_test.ok(
   'operations admin restores the shop');
 select qassa_test.ok(
   (select not is_suspended and suspension_reason is null
-     from public.barbershops where id = :'shop_a'),
+     from public.list_platform_shops() where id = :'shop_a'),
   'restoring a shop clears the suspension reason');
 select qassa_test.ok(
   exists (select 1 from public.public_barbershops where id = :'shop_a'),

@@ -3,8 +3,13 @@ import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { ShopBooking } from "@/components/booking/shop-booking";
+import { BarberAvatar } from "@/components/shop/barber-avatar";
+import { Reveal } from "@/components/shop/reveal";
+import { StorefrontGallery } from "@/components/shop/storefront-gallery";
+import { StorefrontHero } from "@/components/shop/storefront-hero";
 import { createClient } from "@/lib/supabase/server";
 import { getPublicShopBySlug } from "@/lib/shops/marketplace";
+import { publicMediaUrl } from "@/lib/shops/media";
 import { SHOP_TEMPLATES } from "@/lib/shops/templates";
 
 export const instant = false;
@@ -65,33 +70,60 @@ export default async function ShopWebsitePage({ params }: ShopPageProps) {
   lastDate.setUTCDate(lastDate.getUTCDate() + 60);
   const lastDateString = lastDate.toISOString().slice(0, 10);
 
+  const logoUrl = publicMediaUrl(shop.logo_path);
+  const coverUrl = publicMediaUrl(shop.cover_path);
+  const galleryUrls = shop.gallery_paths
+    .map((path) => publicMediaUrl(path))
+    .filter((url): url is string => Boolean(url));
+  const priceFormat = new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: "TND",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 3,
+  });
+  const lowestPrice = shop.services.length
+    ? Math.min(...shop.services.map((service) => service.price_tnd))
+    : null;
+  const todayWeekday = new Date(`${currentDate}T00:00:00.000Z`).getUTCDay();
+  const weekdayFormat = new Intl.DateTimeFormat(locale, {
+    weekday: "long",
+    timeZone: "UTC",
+  });
+
   return (
     <main className={`min-h-[calc(100vh-64px)] ${template.shell}`}>
-      <div className="mx-auto max-w-5xl px-6 py-16 sm:py-24">
+      <div className="mx-auto max-w-5xl px-6 pb-28 pt-10 sm:pt-14 lg:pb-20">
         <Link
           href="/discover"
           className={`inline-flex min-h-11 items-center font-medium hover:underline ${template.accent}`}
         >
           {t("backToDiscover")}
         </Link>
-        <header className="mt-12 max-w-3xl">
-          <p className={`text-sm font-semibold uppercase tracking-[0.2em] ${template.accent}`}>
-            QASSA · {t(`templates.${template.label}`)}
-          </p>
-          <h1 className="mt-4 font-display text-4xl font-bold sm:text-6xl">
-            {shop.name}
-          </h1>
-          {shop.description && (
-            <p className="mt-6 max-w-2xl text-lg leading-8 opacity-80">
-              {shop.description}
-            </p>
-          )}
-        </header>
+
+        <div className="mt-6">
+          <StorefrontHero
+            shopName={shop.name}
+            description={shop.description}
+            city={shop.city}
+            phone={shop.phone}
+            templateName={t(`templates.${template.label}`)}
+            logoUrl={logoUrl}
+            coverUrl={coverUrl}
+            galleryUrls={galleryUrls}
+            serviceCount={shop.services.length}
+            lowestPriceTnd={lowestPrice}
+            locale={locale}
+            template={template}
+          />
+        </div>
+
+        <StorefrontGallery urls={galleryUrls} shopName={shop.name} template={template} />
 
         {(shop.city || shop.address || shop.phone) && (
-          <section
+          <Reveal
+            as="section"
             aria-label={t("contactDetails")}
-            className={`mt-12 grid gap-4 rounded-2xl border p-6 sm:grid-cols-2 ${template.panel}`}
+            className={`mt-16 grid gap-4 rounded-2xl border p-6 sm:grid-cols-2 ${template.panel}`}
           >
             {(shop.city || shop.address) && (
               <div>
@@ -116,33 +148,37 @@ export default async function ShopWebsitePage({ params }: ShopPageProps) {
                 </a>
               </div>
             )}
-          </section>
+          </Reveal>
         )}
 
-        <ShopBooking
-          shop={shop}
-          locale={locale}
-          today={currentDate}
-          lastBookableDate={lastDateString}
-          authenticated={Boolean(user)}
-          panelClass={template.panel}
-          accentClass={template.accent}
-        />
+        <div id="booking" className="scroll-mt-24">
+          <ShopBooking
+            shop={shop}
+            locale={locale}
+            today={currentDate}
+            lastBookableDate={lastDateString}
+            authenticated={Boolean(user)}
+            panelClass={template.panel}
+            accentClass={template.accent}
+          />
+        </div>
 
-        <div className="mt-12 grid gap-8 lg:grid-cols-2">
-          <section aria-labelledby="services-title">
+        <div className="mt-16 grid gap-10 lg:grid-cols-2">
+          <Reveal as="section" aria-labelledby="services-title">
             <h2
               id="services-title"
-              className="font-display text-2xl font-bold"
+              className="font-display text-2xl font-bold sm:text-3xl"
             >
               {t("services")}
             </h2>
             {shop.services.length ? (
-              <ul className="mt-4 grid gap-3">
-                {shop.services.map((service) => (
-                  <li
+              <ul className="mt-5 grid gap-3">
+                {shop.services.map((service, index) => (
+                  <Reveal
+                    as="li"
                     key={service.id}
-                    className={`rounded-xl border p-5 ${template.panel}`}
+                    delay={index * 60}
+                    className={`qassa-card rounded-xl border p-5 ${template.panel}`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -152,88 +188,126 @@ export default async function ShopWebsitePage({ params }: ShopPageProps) {
                             {service.description}
                           </p>
                         )}
-                        <p className="mt-2 text-sm opacity-80">
+                        <p className={`mt-2 text-sm ${template.muted}`}>
                           {t("durationMinutes", {
                             minutes: service.duration_minutes,
                           })}
                         </p>
                       </div>
                       <span className={`font-semibold ${template.accent}`}>
-                        {new Intl.NumberFormat(locale, {
-                          style: "currency",
-                          currency: "TND",
-                          maximumFractionDigits: 3,
-                        }).format(service.price_tnd)}
+                        {priceFormat.format(service.price_tnd)}
                       </span>
                     </div>
-                  </li>
+                  </Reveal>
                 ))}
               </ul>
             ) : (
               <p className="mt-3 opacity-80">{t("noServices")}</p>
             )}
-          </section>
+          </Reveal>
 
-          <section aria-labelledby="barbers-title">
-            <h2 id="barbers-title" className="font-display text-2xl font-bold">
+          <Reveal as="section" aria-labelledby="barbers-title" delay={80}>
+            <h2 id="barbers-title" className="font-display text-2xl font-bold sm:text-3xl">
               {t("barbers")}
             </h2>
             {shop.barbers.length ? (
-              <ul className="mt-4 grid gap-3">
-                {shop.barbers.map((barber) => (
-                  <li
+              <ul className="mt-5 grid gap-4 sm:grid-cols-2">
+                {shop.barbers.map((barber, index) => (
+                  <Reveal
+                    as="li"
                     key={barber.id}
-                    className={`rounded-xl border p-5 ${template.panel}`}
+                    delay={index * 60}
+                    className={`qassa-card group h-full rounded-2xl border p-4 ${template.panel}`}
                   >
-                    <h3 className="font-semibold">{barber.display_name}</h3>
+                    <BarberAvatar
+                      name={barber.display_name}
+                      url={publicMediaUrl(barber.avatar_path)}
+                      alt={t("barberPhotoAria", { name: barber.display_name })}
+                    />
+                    <h3 className="mt-4 font-semibold">{barber.display_name}</h3>
                     {barber.bio && (
-                      <p className="mt-2 text-sm leading-6 opacity-80">
+                      <p className={`mt-2 text-sm leading-6 ${template.muted}`}>
                         {barber.bio}
                       </p>
                     )}
                     {barber.serviceIds.some((id) => serviceNames.has(id)) && (
-                      <p className="mt-2 text-sm opacity-80">
-                        {t("barberServices")}:{" "}
+                      <p className={`mt-3 text-sm ${template.muted}`}>
                         {barber.serviceIds
                           .map((id) => serviceNames.get(id))
                           .filter(Boolean)
-                          .join(", ")}
+                          .join(" · ")}
                       </p>
                     )}
-                  </li>
+                  </Reveal>
                 ))}
               </ul>
             ) : (
               <p className="mt-3 opacity-80">{t("noBarbers")}</p>
             )}
-          </section>
+          </Reveal>
 
-          <section aria-labelledby="hours-title" className="lg:col-span-2">
-            <h2 id="hours-title" className="font-display text-2xl font-bold">
+          <Reveal as="section" aria-labelledby="hours-title" className="lg:col-span-2">
+            <h2 id="hours-title" className="font-display text-2xl font-bold sm:text-3xl">
               {t("hours")}
             </h2>
             {shop.businessHours.length ? (
               <ul
-                className={`mt-4 grid gap-3 rounded-xl border p-5 sm:grid-cols-2 lg:grid-cols-3 ${template.panel}`}
+                className={`mt-5 grid gap-3 rounded-2xl border p-6 sm:grid-cols-2 lg:grid-cols-3 ${template.panel}`}
               >
-                {shop.businessHours.map((hours) => (
-                  <li key={hours.id} className="flex justify-between gap-4">
-                    <span>
-                      {new Intl.DateTimeFormat(locale, {
-                        weekday: "long",
-                        timeZone: "UTC",
-                      }).format(new Date(Date.UTC(2024, 0, 7 + hours.weekday)))}
-                    </span>
-                    <span dir="ltr">
-                      {hours.opens_at.slice(0, 5)}–{hours.closes_at.slice(0, 5)}
-                    </span>
-                  </li>
-                ))}
+                {shop.businessHours.map((hours) => {
+                  const isToday = hours.weekday === todayWeekday;
+                  return (
+                    <li
+                      key={hours.id}
+                      className={`flex items-center justify-between gap-4 rounded-xl px-3 py-2 ${
+                        isToday ? `font-semibold ${template.accent}` : ""
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        {weekdayFormat.format(new Date(Date.UTC(2024, 0, 7 + hours.weekday)))}
+                        {isToday && (
+                          <span className="text-xs font-semibold uppercase tracking-wide">
+                            {t("todayBadge")}
+                          </span>
+                        )}
+                      </span>
+                      <span dir="ltr">
+                        {hours.opens_at.slice(0, 5)}–{hours.closes_at.slice(0, 5)}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p className="mt-3 opacity-80">{t("noHours")}</p>
             )}
-          </section>
+          </Reveal>
+        </div>
+      </div>
+
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center p-3 lg:hidden">
+        <div
+          className={`pointer-events-auto flex w-full max-w-md items-center gap-2 rounded-2xl border p-2 shadow-2xl backdrop-blur ${template.panel}`}
+        >
+          {lowestPrice !== null && (
+            <span className="min-w-0 flex-1 truncate px-2 text-sm">
+              {t("heroFrom", { price: priceFormat.format(lowestPrice) })}
+            </span>
+          )}
+          {shop.phone && (
+            <a
+              href={`tel:${shop.phone}`}
+              className={`inline-flex min-h-11 items-center rounded-xl border px-4 text-sm font-semibold ${template.ghost}`}
+            >
+              {t("heroCall")}
+            </a>
+          )}
+          <a
+            href="#booking"
+            className={`qassa-cta inline-flex min-h-11 items-center rounded-xl px-5 text-sm font-semibold ${template.cta}`}
+          >
+            {t("heroBook")}
+          </a>
         </div>
       </div>
     </main>

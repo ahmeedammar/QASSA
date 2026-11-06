@@ -200,18 +200,18 @@ select qassa_test.ok(
 
 -- ── Suspended shop ─────────────────────────────────────────────────────
 reset role;
-select pg_catalog.set_config('qassa.allow_shop_suspension', 'on', true);
+select pg_catalog.set_config('qassa.allow_shop_suspension', 'on', false);
 update public.barbershops set is_suspended = true where id = :'shop_b';
-select pg_catalog.set_config('qassa.allow_shop_suspension', '', true);
+select pg_catalog.set_config('qassa.allow_shop_suspension', '', false);
 set role authenticated;
 select qassa_test.throws(
   format('select public.book_appointment(%L, %L, %L, %L, %L)',
     :'shop_b', :'barber_b', :'service_b', :'slot_1000', :'key_4'),
   'P0001', 'suspended shop cannot be booked');
 reset role;
-select pg_catalog.set_config('qassa.allow_shop_suspension', 'on', true);
+select pg_catalog.set_config('qassa.allow_shop_suspension', 'on', false);
 update public.barbershops set is_suspended = false where id = :'shop_b';
-select pg_catalog.set_config('qassa.allow_shop_suspension', '', true);
+select pg_catalog.set_config('qassa.allow_shop_suspension', '', false);
 
 -- ── Started and ended appointments (0013 cutoff, 0012 manager actions) ──
 -- Inserted directly by the superuser because the API never books the past.

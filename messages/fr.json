@@ -53,7 +53,23 @@
       "classicGentleman": "Classic Gentleman",
       "minimalStudio": "Minimal Studio",
       "darkPrestige": "Dark Prestige"
-    }
+    },
+    "heroAria": "Présentation de {name}",
+    "heroServices": "{count, plural, one {# service} other {# services}}",
+    "heroFrom": "À partir de {price}",
+    "heroBook": "Réserver",
+    "heroCall": "Appeler",
+    "heroSlides": "Photos du salon",
+    "heroSlideLabel": "Image {index} sur {total}",
+    "galleryTitle": "En images",
+    "galleryHint": "Survolez une photo, cliquez pour l'agrandir.",
+    "galleryView": "Agrandir",
+    "galleryImageAria": "Photo {index} du salon {name}",
+    "galleryClose": "Fermer",
+    "galleryPrevious": "Photo précédente",
+    "galleryNext": "Photo suivante",
+    "barberPhotoAria": "Portrait de {name}",
+    "todayBadge": "Aujourd'hui"
   },
   "booking": {
     "eyebrow": "Réservation en ligne",
@@ -142,7 +158,7 @@
   },
   "studio": {
     "title": "Studio QASSA",
-    "description": "Configurez et gérez votre salon sur QASSA.",
+    "description": "Description",
     "yourShops": "Vos salons",
     "published": "Publié",
     "draft": "Non publié",
@@ -156,7 +172,6 @@
     "city": "Ville",
     "address": "Adresse",
     "phone": "Téléphone",
-    "description": "Description",
     "template": "Style du site",
     "createShop": "Créer le salon",
     "creating": "Création…",
@@ -205,7 +220,8 @@
       "services": "Ajoutez au moins un service actif.",
       "barber_services": "Attribuez un service actif à au moins un barbier actif.",
       "shop_hours": "Définissez les horaires d'ouverture du salon.",
-      "barber_schedules": "Définissez les horaires d'au moins un barbier actif."
+      "barber_schedules": "Définissez les horaires d'au moins un barbier actif.",
+      "shop_media": "Ajoutez au moins 3 photos du salon."
     },
     "shopHoursTitle": "Horaires d'ouverture du salon",
     "shopHoursDescription": "Définissez les créneaux réservables par les clients. Les horaires sont en heure tunisienne. Ajoutez plusieurs périodes pour les horaires coupés.",
@@ -293,7 +309,29 @@
       "classicGentleman": "Classic Gentleman",
       "minimalStudio": "Minimal Studio",
       "darkPrestige": "Dark Prestige"
-    }
+    },
+    "mediaTitle": "Visuels du salon",
+    "mediaDescription": "Téléversez la devanture, les coupes et l'équipe. Votre site les met en scène automatiquement.",
+    "mediaCover": "Photo de couverture",
+    "mediaLogo": "Logo",
+    "mediaGallery": "Galerie",
+    "mediaGalleryRequired": "{count, plural, one {Ajoutez encore # photo avant de publier.} other {Ajoutez encore # photos avant de publier.}}",
+    "mediaGalleryCount": "{count} / {max} photos",
+    "mediaSave": "Enregistrer les visuels",
+    "mediaTips": "Ces visuels sont la vitrine de {name} : lumière naturelle, détails nets, rien de flou.",
+    "mediaRemove": "Retirer",
+    "mediaReplace": "Remplacer",
+    "mediaUploading": "Téléversement…",
+    "mediaDropHint": "Cliquez ou déposez une image",
+    "mediaAddImages": "Ajouter des photos",
+    "mediaMoveFirst": "Mettre en avant",
+    "mediaMoveLast": "Déplacer à la fin",
+    "mediaCoverPick": "Accroche",
+    "mediaBarberPhoto": "Photo du barbier",
+    "mediaUnsupportedType": "Formats acceptés : WebP, JPG, PNG ou AVIF.",
+    "mediaTooLarge": "Image trop lourde (5 Mo maximum).",
+    "mediaUploadFailed": "Échec du téléversement. Réessayez.",
+    "mediaGalleryLimit": "Galerie complète (12 photos maximum)."
   },
   "control": {
     "title": "QASSA Control",

@@ -91,3 +91,201 @@ body {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
+
+/* ── Storefront motion layer ──
+   Pure CSS so the marketing pages stay light, CSP-safe and honours
+   prefers-reduced-motion without shipping an animation library. */
+
+@keyframes qassa-ken-burns {
+  from {
+    transform: scale(1.04) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.18) translate3d(0, -2%, 0);
+  }
+}
+
+@keyframes qassa-fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes qassa-slide-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.qassa-ken-burns {
+  animation: qassa-ken-burns 14s ease-in-out infinite alternate;
+}
+
+.qassa-reveal {
+  opacity: 0;
+}
+
+.qassa-reveal-in {
+  animation: qassa-fade-up 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.qassa-slide-in {
+  animation: qassa-slide-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.qassa-cta {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.3s ease,
+    filter 0.3s ease;
+}
+
+.qassa-cta::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 25%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 75%
+  );
+  transform: translateX(-110%);
+  transition: transform 0.7s ease;
+}
+
+.qassa-cta:hover {
+  transform: translate3d(0, -2px, 0);
+  box-shadow: 0 16px 34px -18px rgb(0 0 0 / 0.55);
+  filter: saturate(1.05);
+}
+
+.qassa-cta:hover::after {
+  transform: translateX(110%);
+}
+
+.qassa-cta:active {
+  transform: translate3d(0, 0, 0) scale(0.985);
+}
+
+.qassa-card {
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.qassa-card:hover {
+  transform: translate3d(0, -4px, 0);
+  box-shadow: 0 22px 40px -26px rgb(0 0 0 / 0.5);
+}
+
+/* Hover-expand gallery: the focused panel claims the width, the rest breathe. */
+/* Display stays with the Tailwind utilities so the responsive switch
+   (`hidden lg:flex`) is not overridden by this later rule. */
+.qassa-accordion {
+  align-items: stretch;
+  gap: 0.5rem;
+  height: clamp(320px, 44vw, 460px);
+}
+
+.qassa-accordion-panel {
+  position: relative;
+  flex: 0 0 auto;
+  width: 4.5rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  cursor: pointer;
+  transition:
+    width 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    flex-grow 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.45s ease;
+  filter: saturate(0.85);
+}
+
+.qassa-accordion-panel:hover,
+.qassa-accordion-panel:focus-visible,
+.qassa-accordion-panel[data-active="true"] {
+  flex-grow: 1;
+  width: min(58vw, 30rem);
+  filter: saturate(1);
+}
+
+.qassa-accordion-caption {
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  transition:
+    opacity 0.45s ease 0.08s,
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.08s;
+}
+
+.qassa-accordion-panel:hover .qassa-accordion-caption,
+.qassa-accordion-panel:focus-visible .qassa-accordion-caption,
+.qassa-accordion-panel[data-active="true"] .qassa-accordion-caption {
+  opacity: 1;
+  transform: none;
+}
+
+.qassa-snapper {
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.qassa-snapper > * {
+  scroll-snap-align: center;
+}
+
+.qassa-slot {
+  transition:
+    transform 0.2s ease,
+    background-color 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.qassa-slot:hover:not(:disabled) {
+  transform: translate3d(0, -2px, 0);
+}
+
+.qassa-slot:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qassa-ken-burns,
+  .qassa-reveal-in,
+  .qassa-slide-in {
+    animation: none;
+  }
+
+  .qassa-reveal {
+    opacity: 1;
+  }
+
+  .qassa-cta,
+  .qassa-cta::after,
+  .qassa-card,
+  .qassa-accordion-panel,
+  .qassa-accordion-caption,
+  .qassa-slot {
+    transition: none;
+  }
+
+  .qassa-cta:hover,
+  .qassa-card:hover,
+  .qassa-slot:hover:not(:disabled) {
+    transform: none;
+  }
+}

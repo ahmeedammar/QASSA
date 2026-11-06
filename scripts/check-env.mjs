@@ -26,6 +26,9 @@ console.log("===================================================================
 console.log("                   QASSA PRODUCTION ENVIRONMENT VERIFICATION                    ");
 console.log("================================================================================");
 
+const isDeployedProduction =
+  combined.VERCEL_ENV === "production" || combined.NODE_ENV === "production";
+
 const checks = [
   {
     key: "NEXT_PUBLIC_SUPABASE_URL",
@@ -42,8 +45,14 @@ const checks = [
   {
     key: "NEXT_PUBLIC_SITE_URL",
     required: true,
-    validate: (v) => typeof v === "string" && (v.startsWith("http://") || v.startsWith("https://")),
-    msg: "Must be a valid canonical site origin",
+    validate: (v) => {
+      if (typeof v !== "string" || !/^https?:\/\//.test(v)) return false;
+      if (!isDeployedProduction) return true;
+      return !/(localhost|127\.0\.0\.1|\[::1\])/.test(v);
+    },
+    msg: isDeployedProduction
+      ? "Must be the canonical public origin; a loopback value makes Supabase email links point at localhost"
+      : "Must be a valid canonical site origin",
   },
   {
     key: "UPSTASH_REDIS_REST_URL",
