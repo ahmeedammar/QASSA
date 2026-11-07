@@ -11,6 +11,12 @@ vi.mock("@/lib/actions/control", () => ({
   setShopSuspension: vi.fn(),
 }));
 
+vi.mock("@/i18n/navigation", () => ({
+  Link: (props: { href: string; children: React.ReactNode }) => (
+    <a href={props.href}>{props.children}</a>
+  ),
+}));
+
 afterEach(cleanup);
 
 const shops = [

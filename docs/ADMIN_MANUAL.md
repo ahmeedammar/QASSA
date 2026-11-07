@@ -76,9 +76,21 @@ no older than **10 minutes**.
 
 Open **`/fr/control`** (or `/en/control`).
 
-Each shop card shows: name, city, one status badge (`Suspendu` / `Publié` /
-`Non publié`), creation date in **Africa/Tunis** time, and the suspension reason
-if there is one. Newest shops first.
+The header carries your role (`Propriétaire de la plateforme`, `Super
+administrateur`, …) and an **MFA actif** badge. If the badge is missing you were
+redirected to `/control/mfa` — enter the code first.
+
+Below it, four tiles count the platform: **Total salons**, **Publiés**, **Non
+publiés**, **Suspendus**. Each tile is also a filter — press **Suspendus** to see
+only suspended shops, press **Total salons** to clear the filter. The search box
+matches name, slug or city; the sort selector switches between newest-first and
+name order. The line under the toolbar tells you how many of the total are
+currently shown.
+
+Each shop card shows: a monogram, name, city, one status badge (`Suspendu` /
+`Publié` / `Non publié`), the slug, creation date in **Africa/Tunis** time, a
+**Voir le site** link when the shop is published, and the suspension reason if
+there is one.
 
 - **Suspendre le salon** — fill in the reason (max 250 characters), press the
   button. Write the reason as if the owner will read it, because they will call
@@ -88,15 +100,25 @@ if there is one. Newest shops first.
   stored suspension reason. The shop returns to exactly the publication state it
   had before; if it was published it is visible again immediately.
 
+If your role cannot suspend (support or finance admin), the cards render without
+action buttons and a **Lecture seule** notice explains why.
+
 **If you see `Reconnectez-vous avant de modifier la suspension d'un salon`**
 your login is older than 10 minutes. Log out, log back in (with the code), act
 again. Plan suspension sessions: do the batch right after signing in.
 
-**If the list looks short:** it shows the 100 most recent shops only. There is no
-pagination. Past 100 shops, use SQL ([§8](#8-emergency-database-operations)).
+**If the list looks short:** it shows the 100 most recent shops only, and the
+panel says so explicitly. There is no pagination. Past 100 shops, use SQL
+([§8](#8-emergency-database-operations)).
 
 **If you see `Trop de modifications en peu de temps…`**: admin actions are
 capped at 30 per minute per admin. Wait and retry.
+
+**If you see `Impossible de charger les salons. Réessayez.`**: the shop list
+failed to load, not your access. Press **Réessayer** — it re-runs the query. Then
+open **Détails techniques** and read the code; the panel already translates the
+common ones into a next step. See the playbook in
+[§11](#11-playbooks) if it persists.
 
 ### What suspension actually does
 
@@ -570,6 +592,33 @@ check `is_published` and then the `missing` list from §5 — in that order.
 **Control shows `Vous n'avez pas accès…` / `forbidden`.** Two causes: your
 `platform_admins` row is inactive, or the session lost AAL2. Sign out, sign in,
 enter the code, retry.
+
+**Control shows `Impossible de charger les salons. Réessayez.`** Your access is
+fine — the page gate already passed — so the `list_platform_shops` RPC itself
+failed. Open **Détails techniques** on the panel and read the code:
+
+| Code | Meaning | What to do |
+| --- | --- | --- |
+| `PGRST202`, `42883` | the function is not in the database (or PostgREST has not refreshed its schema cache) | apply `0014_platform_shop_suspension.sql`, then reload the Supabase API schema |
+| `unexpected_shape` | the function exists but returns different columns | the live database and the migrations have drifted; re-apply `0014` |
+| `PGRST301`, `PGRST302` | the token did not reach PostgREST | **Se reconnecter**, enter the MFA code, come back |
+| anything else | database-side failure | read the message, check the Supabase logs |
+
+To confirm the first two rows yourself, run this **read-only** query in the
+Supabase SQL editor (no trailing semicolon):
+
+```sql
+select p.proname,
+       has_function_privilege('authenticated', p.oid, 'execute') as auth_can_run
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname in ('list_platform_shops', 'set_shop_suspension')
+```
+
+Zero rows means migration `0014` was never applied. `auth_can_run = false` means
+the grants at the bottom of `0014` are missing. Both are fixed by re-running that
+migration — it is idempotent (`create or replace`, `drop trigger if exists`).
 
 **Something is wrong and you are scared of the database.** Suspend the affected
 shop (reversible, one press), take a backup, then investigate. Suspension buys
