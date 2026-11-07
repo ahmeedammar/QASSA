@@ -14,7 +14,14 @@
     "heroTitle": "Votre style. Votre rendez-vous.",
     "heroSubtitle": "La plateforme tunisienne de réservation et de gestion pour barbiers et salons de coiffure.",
     "ctaDiscover": "Découvrir les salons",
-    "ctaOwner": "Gérez votre salon avec QASSA"
+    "ctaOwner": "Gérez votre salon avec QASSA",
+    "badge": "Pensé pour la Tunisie",
+    "ownerEyebrow": "Espace propriétaire",
+    "ownerTitle": "Votre salon mérite mieux qu'un agenda papier.",
+    "ownerText": "QASSA donne à chaque salon un site vitrine, une équipe organisée et des rendez-vous confirmés en ligne. Vous gardez la main, vos clients réservent en quelques secondes.",
+    "ownerPointSite": "Un site vitrine animé, cinq thèmes au choix, vos photos et vos horaires.",
+    "ownerPointTeam": "Services, barbiers, pauses et jour de repos hebdomadaire conformes à la loi tunisienne.",
+    "ownerPointBookings": "Réservations en ligne 24h/24, sans double réservation ni appel manqué."
   },
   "discover": {
     "title": "Trouvez votre salon de coiffure",

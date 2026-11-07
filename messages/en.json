@@ -14,7 +14,14 @@
     "heroTitle": "Your Style. Your Appointment.",
     "heroSubtitle": "The Tunisian platform for barbershop booking and management.",
     "ctaDiscover": "Discover barbershops",
-    "ctaOwner": "Run your shop with QASSA"
+    "ctaOwner": "Run your shop with QASSA",
+    "badge": "Built for Tunisia",
+    "ownerEyebrow": "For shop owners",
+    "ownerTitle": "Your shop deserves better than a paper diary.",
+    "ownerText": "QASSA gives every shop a storefront, an organised team and appointments confirmed online. You stay in control; your clients book in seconds.",
+    "ownerPointSite": "An animated storefront, five themes to choose from, your photos and your opening hours.",
+    "ownerPointTeam": "Services, barbers, breaks and a weekly rest day that follows Tunisian law.",
+    "ownerPointBookings": "Online booking around the clock, with no double bookings and no missed calls."
   },
   "discover": {
     "title": "Find your barbershop",
